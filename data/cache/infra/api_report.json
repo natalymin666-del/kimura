@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-01-04T11:09:49.835078+00:00",
+  "targets_checked": 2,
+  "requests_total": 90,
+  "findings_total": 0,
+  "findings_interesting": 0,
+  "files": {
+    "api_endpoints": "/home/nataly/kimura/data/cache/infra/api_endpoints.txt",
+    "api_report": "/home/nataly/kimura/data/cache/infra/api_report.json"
+  },
+  "top_findings": []
+}

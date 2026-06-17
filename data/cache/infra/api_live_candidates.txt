@@ -1,0 +1,8 @@
+https://examregistration-uat.github.com
+https://api.security.github.com
+https://api.github.com
+https://examregistration-api.github.com
+https://api.mcp.github.com
+https://examadmin.github.com
+https://examadmin-uat.github.com
+https://examregistration-uat-api.github.com

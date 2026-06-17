@@ -1,0 +1,32 @@
+Command: dirscan
+Target:  tesla.com
+Time:    20251206_043537 (UTC)
+
+🔍 Запускаю dirscan (лайт) для: https://tesla.com
+Количество путей в словаре: 25
+
+• /admin — HTTP 403
+• /admin/login — HTTP 403
+• /login — HTTP 403
+• /logon — HTTP 403
+• /dashboard — HTTP 403
+• /wp-admin — HTTP 403
+• /wp-login.php — HTTP 403
+• /cp — HTTP 403
+• /cpanel — HTTP 403
+• /user — HTTP 403
+• /users — HTTP 403
+• /account — HTTP 403
+• /manage — HTTP 403
+• /manager — HTTP 403
+• /panel — HTTP 403
+• /backend — HTTP 403
+• /config — HTTP 403
+• /config.php — HTTP 403
+• /.git — HTTP 403
+• /.env — HTTP 403
+• /api — HTTP 403
+• /api/v1 — HTTP 403
+• /private — HTTP 403
+• /secret — HTTP 403
+• /test — HTTP 403

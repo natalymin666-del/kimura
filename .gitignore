@@ -1,0 +1,5 @@
+.env
+*.key
+fuzzer_checkpoint.json
+fuzzer.log
+venv/

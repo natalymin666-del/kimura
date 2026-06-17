@@ -1,0 +1,179 @@
+[Kimura Infra Discovery]
+Scan date: 2025-12-20 23:31:46.531409 UTC
+
+============================================================
+TARGET: prime-staging.coinbase.com
+
+[DNS]
+172.64.152.241
+104.18.35.15
+
+[HEADERS]
+HTTP/2 530 
+date: Sat, 20 Dec 2025 23:31:46 GMT
+content-type: text/plain; charset=UTF-8
+content-length: 16
+report-to: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=T788uG5bOK8T495jEmQMg60o9F%2B9%2FNL7jLN31vEnNBoKYAr8bCJBMnI5YivB2Ec3UKNEiEQI2%2BFnEnXSRgNuYU90PUirLmKISpjct4DkdyW0e5Hvj6Y84MqS2gSazRqKcXjZxvO2n42F%2B95OCkuTKz6awGlhcRa2"}],"group":"cf-nel","max_age":604800}
+nel: {"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+referrer-policy: same-origin
+cache-control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+expires: Thu, 01 Jan 1970 00:00:01 GMT
+set-cookie: _cfuvid=NTLWx0MPotxpzINcKPWb5RI6crCO2qcRFqJdUpmxSU8-1766273506652-0.0.1.1-604800000; path=/; domain=.coinbase.com; HttpOnly; Secure; SameSite=None
+server: cloudflare
+cf-ray: 9b12ef685823c716-AMS
+
+[NMAP]
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-21 00:31 CET
+Nmap scan report for prime-staging.coinbase.com (172.64.152.241)
+Host is up (0.0053s latency).
+Other addresses for prime-staging.coinbase.com (not scanned): 2a06:98c1:3105::6812:230f 2606:4700:440a::ac40:98f1 104.18.35.15
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+2375/tcp filtered docker
+3000/tcp filtered ppp
+5601/tcp filtered esmagent
+8080/tcp open     http-proxy
+8443/tcp open     https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 1.24 seconds
+
+============================================================
+TARGET: api-public.sandbox.exchange.coinbase.com
+
+[DNS]
+172.64.155.167
+104.18.32.89
+
+[HEADERS]
+HTTP/2 404 
+date: Sat, 20 Dec 2025 23:31:49 GMT
+content-type: application/json; charset=utf-8
+content-length: 69
+cf-ray: 9b12ef7668244a25-AMS
+access-control-allow-headers: Content-Type, Accept, cb-session, cb-fp, cb-form-factor
+access-control-allow-methods: GET,POST,DELETE,PUT
+access-control-allow-origin: *
+access-control-expose-headers: cb-before, cb-after, cb-gdpr
+access-control-max-age: 7200
+cache-control: no-store
+etag: W/"45-PD/loXyUXjqOfvmYNvr5lCUlTIk"
+strict-transport-security: max-age=15552000; includeSubDomains
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+cf-cache-status: MISS
+set-cookie: __cf_bm=dlU.zELtnGhv1Z_poIoJDZZj8SaBlMavP.YhgmPD2yo-1766273509-1.0.1.1-HK3U5K8k1LL5SEyGPdZeJO3LR.rs6_c4S2ohZ_Qq4P19wpTfcnGe7uiZkqc03_xXFZjhBQ3jV52KLXTbFqrePutpRbHJ67pLgQfO91DjD6Q; path=/; expires=Sun, 21-Dec-25 00:01:49 GMT; domain=.sandbox.exchange.coinbase.com; HttpOnly; Secure; SameSite=None
+server: cloudflare
+
+[NMAP]
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-21 00:31 CET
+Nmap scan report for api-public.sandbox.exchange.coinbase.com (104.18.32.89)
+Host is up (0.0066s latency).
+Other addresses for api-public.sandbox.exchange.coinbase.com (not scanned): 2a06:98c1:3102::ac40:9ba7 2606:4700:440c::6812:2059 172.64.155.167
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+2375/tcp filtered docker
+3000/tcp filtered ppp
+5601/tcp filtered esmagent
+8080/tcp open     http-proxy
+8443/tcp open     https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 1.25 seconds
+
+============================================================
+TARGET: api.coinbase.com
+
+[DNS]
+172.64.152.241
+104.18.35.15
+
+[HEADERS]
+HTTP/2 301 
+date: Sat, 20 Dec 2025 23:31:50 GMT
+content-type: text/html
+content-length: 167
+location: https://developers.coinbase.com/api
+cache-control: max-age=3600
+expires: Sun, 21 Dec 2025 00:31:50 GMT
+set-cookie: __cf_bm=SwMRB90d1bZ7qyjjqtidshNROjgckpvu0tEcqD_37vw-1766273510-1.0.1.1-dmQtueeuTqEFRgIZTg4fIJ0uRlwN_nCRGFISkg08sq92VF0LfAB77_ss4xCjo9M38EelBzpswVmasvDQzT9lisxh1CqQU22aNaFwBRIUW84; path=/; expires=Sun, 21-Dec-25 00:01:50 GMT; domain=.coinbase.com; HttpOnly; Secure; SameSite=None
+set-cookie: _cfuvid=0e5ZIwPs72oq4RowRSnDv8wyUlfe7YWokZ4WERp0Up8-1766273510723-0.0.1.1-604800000; path=/; domain=.coinbase.com; HttpOnly; Secure; SameSite=None
+report-to: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=enPBwCUnqeXMhTElW%2BNUyO6HiHkKwdy5eZyiG0DORyOP9fxiGY%2F%2FA9TF%2FhVGsc99dEXxpd2acOzQLcKnV3E9KpBuA2M8OdrgplLTqDqekx0rAX8B6Nzzcwv9sUHgoSoc3Md7oFUdvAm7gjhB3jI%3D"}],"group":"cf-nel","max_age":604800}
+nel: {"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+server: cloudflare
+cf-ray: 9b12ef81fafc4f25-AMS
+
+[NMAP]
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-21 00:31 CET
+Nmap scan report for api.coinbase.com (172.64.152.241)
+Host is up (0.0065s latency).
+Other addresses for api.coinbase.com (not scanned): 2a06:98c1:3105::6812:230f 2606:4700:440a::ac40:98f1 104.18.35.15
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+2375/tcp filtered docker
+3000/tcp filtered ppp
+5601/tcp filtered esmagent
+8080/tcp open     http-proxy
+8443/tcp open     https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 1.25 seconds
+
+============================================================
+TARGET: exchange.coinbase.com
+
+[DNS]
+104.18.36.178
+172.64.151.78
+
+[HEADERS]
+HTTP/2 200 
+date: Sat, 20 Dec 2025 23:31:52 GMT
+content-type: text/html; charset=utf-8
+cf-ray: 9b12ef8b28d7f5da-AMS
+accept-ranges: bytes
+cache-control: no-store
+content-security-policy: default-src 'self';script-src 'self' https://www.google-analytics.com/analytics.js https://cdn.plaid.com/link/v2/stable/link-initialize.js https://api.coinbase.com https://www.coinbase.com;style-src 'self' 'unsafe-inline';font-src 'self' https://assets.ctfassets.net data:;connect-src 'self' https://api.exchange.coinbase.com wss://www.walletlink.org wss://relay.walletconnect.com wss://relay.walletconnect.org https://verify.walletconnect.com https://explorer-api.walletconnect.com wss://ws-feed.exchange.coinbase.com wss://ws-feed.exchange.coinbase.com/ https://status.exchange.coinbase.com https://api.amplitude.com https://api.coinbase.com https://secure.gravatar.com https://exceptions.coinbase.com https://sessions.coinbase.com/ https://translations.coinbase.com https://events-service.coinbase.com/amp https://events-service.coinbase.com/metrics https://as.coinbase.com https://login.coinbase.com https://api.web3modal.org;frame-src https://www.coinbase.com https://exchange.coinbase.com https://cdn.plaid.com/;child-src 'self' blob: https://www.coinbase.com https://exchange.coinbase.com;img-src 'self' data: blob: https://static-assets.coinbase.com https://dynamic-assets.coinbase.com https://i1.wp.com https://www.google-analytics.com https://stats.g.doubleclick.net https://secure.gravatar.com https://explorer-api.walletconnect.com https://images.ctfassets.net https://res.cloudinary.com;media-src 'self' blob:;object-src 'self' blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri '/csp-logging';
+last-modified: Tue, 02 Dec 2025 18:13:21 GMT
+referrer-policy: strict-origin
+set-cookie: cb_dm=53df6f69-ebbe-4756-99a0-278d2b1467bc; Path=/; Domain=coinbase.com; Expires=Thu, 20 Dec 2035 23:31:52 GMT; HttpOnly; Secure
+set-cookie: __cf_bm=B6FtQTY1jhSKzrLOvvJmMxjR1O7LYoREHdDk1oULf3c-1766273512-1.0.1.1-EDxtNjkkhaUWHQzGNfaHaIAYTn72GSUcWzMzTkxkCScpvzVoPXuRSpJazLNkqqQosIGf_2F1DBNGI.f9faD3LAa65UlyhrTv5vHJUpjWt1Q; path=/; expires=Sun, 21-Dec-25 00:01:52 GMT; domain=.exchange.coinbase.com; HttpOnly; Secure; SameSite=None
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+trace-id: 6310174212463764841
+via: 1.1 1a12f863197f986ec10d35ed76e104f0.cloudfront.net (CloudFront)
+x-amz-cf-id: g_pESguIPCTlxwdDfdFv3m_D_1jTZi5E-Qz1uMuSosKKbFviskSR7A==
+x-amz-cf-pop: IAD61-P10
+x-amz-server-side-encryption: AES256
+x-amz-version-id: null
+x-cache: Miss from cloudfront
+x-content-type-options: nosniff
+x-frame-options: DENY
+cf-cache-status: DYNAMIC
+report-to: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=75bkt9LB6dVPuxhR2SEAyGyJL7zbbwvnxnCCOU%2F57ikWZ34e2Lc4rBonoykIkhU8%2FIjm7%2Ba2ieEhYDs6KL2lYHok1eQgEO%2FNUNnEhI0%2FZ7P%2BWinKN5ISLtu4tZ7MzsKvRYVo8BLjP2XDxozbn4Au7j4FUg%3D%3D"}],"group":"cf-nel","max_age":604800}
+nel: {"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}
+server: cloudflare
+
+[NMAP]
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-21 00:31 CET
+Nmap scan report for exchange.coinbase.com (104.18.36.178)
+Host is up (0.0052s latency).
+Other addresses for exchange.coinbase.com (not scanned): 2a06:98c1:310d::ac40:974e 2a06:98c1:3103::6812:24b2 172.64.151.78
+
+PORT     STATE    SERVICE
+22/tcp   filtered ssh
+2375/tcp filtered docker
+3000/tcp filtered ppp
+5601/tcp filtered esmagent
+8080/tcp open     http-proxy
+8443/tcp open     https-alt
+
+Nmap done: 1 IP address (1 host up) scanned in 1.25 seconds
+

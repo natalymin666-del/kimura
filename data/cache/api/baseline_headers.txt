@@ -1,0 +1,84 @@
+=== https://examregistration-uat.github.com ===
+[https://examregistration-uat.github.com] HTTP/2 301 
+[https://examregistration-uat.github.com] content-length: 0
+[https://examregistration-uat.github.com] location: https://learn-staging.githubapp.com/
+[https://examregistration-uat.github.com] 
+=== https://api.security.github.com ===
+[https://api.security.github.com] HTTP/2 200 
+[https://api.security.github.com] date: Sun, 04 Jan 2026 16:39:47 GMT
+[https://api.security.github.com] content-type: text/html; charset=utf-8
+[https://api.security.github.com] x-github-backend: Kubernetes
+[https://api.security.github.com] x-github-request-id: E9B0:F3736:46C526:614914:695A97D3
+[https://api.security.github.com] 
+=== https://api.github.com ===
+[https://api.github.com] HTTP/2 200 
+[https://api.github.com] date: Sun, 04 Jan 2026 16:39:44 GMT
+[https://api.github.com] cache-control: public, max-age=60, s-maxage=60
+[https://api.github.com] vary: Accept,Accept-Encoding, Accept, X-Requested-With
+[https://api.github.com] x-github-api-version-selected: 2022-11-28
+[https://api.github.com] access-control-expose-headers: ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+[https://api.github.com] access-control-allow-origin: *
+[https://api.github.com] strict-transport-security: max-age=31536000; includeSubdomains; preload
+[https://api.github.com] x-frame-options: deny
+[https://api.github.com] x-content-type-options: nosniff
+[https://api.github.com] x-xss-protection: 0
+[https://api.github.com] referrer-policy: origin-when-cross-origin, strict-origin-when-cross-origin
+[https://api.github.com] content-security-policy: default-src 'none'
+[https://api.github.com] server: github.com
+[https://api.github.com] content-type: application/json; charset=utf-8
+[https://api.github.com] x-github-media-type: github.v3; format=json
+[https://api.github.com] etag: W/"4f825cc84e1c733059d46e76e6df9db557ae5254f9625dfe8e1b09499c449438"
+[https://api.github.com] accept-ranges: bytes
+[https://api.github.com] x-ratelimit-limit: 60
+[https://api.github.com] x-ratelimit-remaining: 57
+[https://api.github.com] x-ratelimit-reset: 1767547415
+[https://api.github.com] x-ratelimit-resource: core
+[https://api.github.com] x-ratelimit-used: 3
+[https://api.github.com] content-length: 2396
+[https://api.github.com] x-github-request-id: B586:11BBDA:141C953:114DDDD:695A97D3
+[https://api.github.com] 
+=== https://examregistration-api.github.com ===
+[https://examregistration-api.github.com] HTTP/2 200 
+[https://examregistration-api.github.com] content-type: text/plain; charset=utf-8
+[https://examregistration-api.github.com] date: Sun, 04 Jan 2026 16:39:48 GMT
+[https://examregistration-api.github.com] server: Kestrel
+[https://examregistration-api.github.com] strict-transport-security: max-age=2592000
+[https://examregistration-api.github.com] 
+=== https://api.mcp.github.com ===
+[https://api.mcp.github.com] HTTP/2 200 
+[https://api.mcp.github.com] access-control-allow-headers: Content-Type, Authorization, X-Requested-With
+[https://api.mcp.github.com] access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+[https://api.mcp.github.com] access-control-allow-origin: *
+[https://api.mcp.github.com] access-control-max-age: 86400
+[https://api.mcp.github.com] content-type: application/json
+[https://api.mcp.github.com] x-ratelimit-limit: 10
+[https://api.mcp.github.com] x-ratelimit-remaining: 1
+[https://api.mcp.github.com] x-ratelimit-reset: 1767544790
+[https://api.mcp.github.com] date: Sun, 04 Jan 2026 16:39:49 GMT
+[https://api.mcp.github.com] content-length: 57
+[https://api.mcp.github.com] x-github-backend: Kubernetes
+[https://api.mcp.github.com] x-github-request-id: E9BE:243F2F:470635:617BED:695A97D5
+[https://api.mcp.github.com] 
+=== https://examadmin.github.com ===
+[https://examadmin.github.com] HTTP/2 200 
+[https://examadmin.github.com] content-type: text/html; charset=utf-8
+[https://examadmin.github.com] date: Sun, 04 Jan 2026 16:39:50 GMT
+[https://examadmin.github.com] server: Kestrel
+[https://examadmin.github.com] set-cookie: TiPMix=48.20090919667559; path=/; HttpOnly; Domain=examadmin.github.com; Max-Age=3600; Secure; SameSite=None
+[https://examadmin.github.com] set-cookie: x-ms-routing-name=self; path=/; HttpOnly; Domain=examadmin.github.com; Max-Age=3600; Secure; SameSite=None
+[https://examadmin.github.com] strict-transport-security: max-age=2592000
+[https://examadmin.github.com] 
+=== https://examadmin-uat.github.com ===
+[https://examadmin-uat.github.com] HTTP/2 200 
+[https://examadmin-uat.github.com] content-type: text/html; charset=utf-8
+[https://examadmin-uat.github.com] date: Sun, 04 Jan 2026 16:39:51 GMT
+[https://examadmin-uat.github.com] server: Kestrel
+[https://examadmin-uat.github.com] strict-transport-security: max-age=2592000
+[https://examadmin-uat.github.com] 
+=== https://examregistration-uat-api.github.com ===
+[https://examregistration-uat-api.github.com] HTTP/2 200 
+[https://examregistration-uat-api.github.com] content-type: text/plain; charset=utf-8
+[https://examregistration-uat-api.github.com] date: Sun, 04 Jan 2026 16:39:53 GMT
+[https://examregistration-uat-api.github.com] server: Kestrel
+[https://examregistration-uat-api.github.com] strict-transport-security: max-age=2592000
+[https://examregistration-uat-api.github.com] 

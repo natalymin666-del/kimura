@@ -1,0 +1,240 @@
+# Application Mapping — Coinbase Exchange API
+Module: infra_discovery  
+Project: CyberKimura  
+Date: 2025-12-21
+
+---
+
+## Target
+Base domain: https://api.exchange.coinbase.com  
+API style: REST  
+Gateway / CDN: Cloudflare  
+Response format: JSON  
+
+---
+
+## Public API Endpoints (Confirmed)
+
+### 1. GET /products
+**URL:** https://api.exchange.coinbase.com/products  
+
+- Status: 200 OK
+- Authentication: ❌ not required
+- Data type: Public market data
+- Content-Type: application/json
+- Cache: Cloudflare (HIT/MISS observed)
+- Methods allowed:
+  - GET → 200
+  - HEAD → 200
+  - OPTIONS → 200
+  - POST → 401
+  - PUT → 401
+  - DELETE → 401
+  - PATCH → 401
+
+**Conclusion:**  
+Public read-only endpoint. Proper auth enforcement for write methods.
+
+---
+
+### 2. GET /currencies
+**URL:** https://api.exchange.coinbase.com/currencies  
+
+- Status: 200 OK
+- Authentication: ❌ not required
+- Data type: Public currency metadata
+- Content-Type: application/json
+- Cache: Cloudflare (HIT)
+- Methods allowed:
+  - GET → 200
+  - HEAD → 200
+  - OPTIONS → 200
+  - POST → 401
+  - PUT → 401
+  - DELETE → 401
+  - PATCH → 401
+
+**Conclusion:**  
+Public informational endpoint. No sensitive data observed.
+
+---
+
+### 3. GET /time
+**URL:** https://api.exchange.coinbase.com/time  
+
+- Status: 200 OK
+- Authentication: ❌ not required
+- Data type: Server time
+- Content-Type: application/json
+- Cache: Cloudflare (MISS)
+- Methods allowed:
+  - GET → 200
+  - HEAD → 200
+  - OPTIONS → 200
+  - POST → 401
+  - PUT → 401
+  - DELETE → 401
+  - PATCH → 401
+
+**Conclusion:**  
+Public utility endpoint. No attack surface identified.
+
+---
+
+## Authentication Behavior Summary
+
+- Public endpoints allow **GET / HEAD / OPTIONS**
+- Write methods correctly return **401 Unauthorized**
+- No auth bypass observed
+- No IDOR vectors detected at baseline
+
+---
+
+## Security Observations
+
+- Cloudflare WAF in front
+- No debug headers
+- No internal identifiers
+- No stack traces
+- Proper method restriction
+
+---
+
+## Bug Bounty Relevance
+
+Current endpoints:
+- ✅ Correctly secured
+- ❌ No immediate vulnerability
+- 📌 Useful as **baseline reference**
+
+These endpoints are **not good bounty targets**, but define expected behavior for:
+- Comparing private endpoints
+- Detecting auth regressions
+- Detecting method misconfigurations elsewhere
+
+---
+
+## Next Mapping Targets (Planned)
+
+- /accounts (auth required)
+- /fills
+- /orders
+- /profiles
+- /fees
+- Versioned APIs (/v2, /v3 if present)
+- Hidden / undocumented endpoints
+
+---
+
+## Private Endpoints
+
+- /accounts
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+- /profiles
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+- /orders
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+- /fills
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+- /fees
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+- /transfers
+- Status: 401 Unauthorized
+- Auth: required
+- Type: private endpoint
+- Notes: expected behavior, no public access
+
+---
+
+**Status:** Baseline mapping complete  
+**Next phase:** Authenticated surface & logic testing
+
+========================================
+PHASE 2 — VERSIONED / DOCS DISCOVERY
+BASE: https://api.exchange.coinbase.com
+
+Tested paths:
+- /v1 -> ?
+- /v2 -> ?
+- /v3 -> ?
+- /api -> ?
+- /api/v1 -> ?
+- /api/v2 -> ?
+- /api/v3 -> ?
+- /docs -> ?
+- /swagger -> 401 Unauthorized (auth required)
+- /openapi.json ->  401 Unauthorized (auth required)
+
+Notes:
+- Any 200/302/403? (write status)
+- JSON/docs found? (yes/no)
+- Redirect target (if any):
+========================================
+
+## Hidden / Undocumented Endpoint Check
+
+Results of quick enumeration against:
+https://api.exchange.coinbase.com
+
+### Public Endpoint
+- /health
+  - Status: 200 OK
+  - Auth: not required
+  - Type: public health endpoint
+  - Notes: exposed service health check
+
+### Existing but Protected Endpoints (401)
+The following endpoints exist but require authentication:
+
+- /api
+- /api/v1
+- /api/v2
+- /api/v3
+- /v1
+- /v2
+- /v3
+- /status
+- /metrics
+- /ping
+- /users
+- /user
+- /me
+- /accounts
+- /profiles
+- /orders
+- /fills
+- /fees
+- /transfers
+- /reports
+- /report
+- /admin
+- /internal
+- /debug
+- /swagger
+- /swagger.json
+- /openapi.json
+- /api-docs
+
+Status: 401 Unauthorized  
+Auth: required  
+Notes: endpoints exist, protected as expected

@@ -1,0 +1,17 @@
+https://examregistration-uat.github.com
+https://developers.github.com
+https://maintainermonth.github.com
+https://api.security.github.com
+https://api.github.com
+https://examregistration-api.github.com
+https://api.mcp.github.com
+https://examadmin.github.com
+https://maintainers.github.com
+https://examadmin-uat.github.com
+https://emails.github.com
+https://developer.github.com
+http://ssh.github.com
+https://globalmaintainersummit.github.com
+https://nodeload.github.com
+https://training.github.com
+https://examregistration-uat-api.github.com

@@ -1,0 +1,6 @@
+
+
+=== CURL STATS ===
+Time Total: 0.007471s
+Size: 0 bytes
+HTTP Code: 000

@@ -1,0 +1,25 @@
+HTTP/2 401 
+date: Sun, 21 Dec 2025 07:18:30 GMT
+content-type: application/json; charset=utf-8
+content-length: 27
+cf-ray: 9b159b177bf41886-AMS
+access-control-allow-headers: Content-Type, Accept, cb-session, cb-fp, cb-form-factor
+access-control-allow-methods: GET,POST,DELETE,PUT
+access-control-allow-origin: *
+access-control-expose-headers: cb-before, cb-after, cb-gdpr
+access-control-max-age: 7200
+cache-control: no-store
+etag: W/"1b-OTB0WjV/ub4RM7iikeBhQVBUCR0"
+strict-transport-security: max-age=15552000; includeSubDomains
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+cf-cache-status: MISS
+set-cookie: __cf_bm=GuXXl1r00K6D5ROTLUAT5Kb8uqPZx5eOoXcdJ7qafIk-1766301510-1.0.1.1-2zy8QemW9jcxnTqR2eVUM_OCtaaB39Zg9Ss81l_mFfC55bt9rLpEla2ZWmzvpsvvdZKz2p1eHy5XX345QNsD7p7Jrpy.0Jsv.HMR8C6mfWk; path=/; expires=Sun, 21-Dec-25 07:48:30 GMT; domain=.exchange.coinbase.com; HttpOnly; Secure; SameSite=None
+report-to: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=ULF%2FxeYiAbY2NjOWKVbjctEIslWjIzt%2F50Xtf4fChBrS05nbYaYo50WGgK9Iw%2FM1i3T43Qakb02yMi%2FfjbCEz%2FO2W5EEnNOa6bdjg3aA6Z180GnrRGPceNFPOMJ8NEDdnM50A1cyZNc5SgeFiFhTllKgwNl25mk%3D"}],"group":"cf-nel","max_age":604800}
+nel: {"success_fraction":0.01,"report_to":"cf-nel","max_age":604800}
+server: cloudflare
+
+{"message":"Unauthorized."}
