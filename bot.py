@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -50,7 +53,7 @@ from modules.corsscan import corsscan_command
 from modules.deeprecon import deeprecon_command
 from modules.attackpath import attackpath_command
 
-TOKEN = "8542225488:AAEJYiF2II5jPQgIvHbB8IxNHl8C9MVtxTU"
+TOKEN = os.getenv("BOT_TOKEN")
 
 
 # ---------- выбор языка ----------
