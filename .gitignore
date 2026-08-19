@@ -3,3 +3,14 @@
 fuzzer_checkpoint.json
 fuzzer.log
 venv/
+
+# Python cache
+_pycache_/
+*.py[cod]
+
+# Local OAuth/PKCE artifacts
+consent_page.html
+cookies.txt
+oauth_state.txt
+pkce_challenge.txt
+pkce_verifier.txt
