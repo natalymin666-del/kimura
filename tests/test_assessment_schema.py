@@ -66,6 +66,34 @@ class AssessmentContractTests(unittest.TestCase):
                 end_date=date(2026, 8, 20),
             )
 
+    def test_max_requests_is_json_safe_and_must_be_positive(self):
+        contract = AssessmentContract(
+            assessment_id="asm-001",
+            client_name="Example BV",
+            assessor_name="Kimura Security",
+            authorized_by="approval-42",
+            objectives=("objective",),
+            scope=("target",),
+            start_date=date(2026, 8, 20),
+            end_date=date(2026, 8, 20),
+            max_requests=3,
+        )
+
+        self.assertEqual(AssessmentContract.from_dict(json.loads(contract.to_json())), contract)
+        for invalid in (0, -1, True, "3"):
+            with self.subTest(invalid=invalid), self.assertRaises(ContractValidationError):
+                AssessmentContract(
+                    assessment_id="asm-001",
+                    client_name="Example BV",
+                    assessor_name="Kimura Security",
+                    authorized_by="approval-42",
+                    objectives=("objective",),
+                    scope=("target",),
+                    start_date=date(2026, 8, 20),
+                    end_date=date(2026, 8, 20),
+                    max_requests=invalid,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

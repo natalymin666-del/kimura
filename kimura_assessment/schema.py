@@ -52,6 +52,7 @@ class AssessmentContract:
     end_date: date
     exclusions: tuple[str, ...] = ()
     credential_references: tuple[str, ...] = ()
+    max_requests: int = 1
 
     def __post_init__(self) -> None:
         for field_name in ("assessment_id", "client_name", "assessor_name", "authorized_by"):
@@ -61,6 +62,9 @@ class AssessmentContract:
         _text_tuple(self.scope, "scope", required=True)
         _text_tuple(self.exclusions, "exclusions", required=False)
         _text_tuple(self.credential_references, "credential_references", required=False)
+
+        if isinstance(self.max_requests, bool) or not isinstance(self.max_requests, int) or self.max_requests <= 0:
+            raise ContractValidationError("max_requests must be a positive integer")
 
         if not isinstance(self.start_date, date) or not isinstance(self.end_date, date):
             raise ContractValidationError("start_date and end_date must be datetime.date values")
