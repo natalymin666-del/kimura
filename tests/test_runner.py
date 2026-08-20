@@ -1,9 +1,11 @@
 from datetime import date
 from dataclasses import replace
+import hashlib
+import json
 from unittest import TestCase
 from unittest.mock import patch
 
-from kimura_assessment import AssessmentContract, AssessmentExecutionError, AssessmentRunner, HttpTarget
+from kimura_assessment import AssessmentContract, AssessmentExecutionError, AssessmentResult, AssessmentRunner, HttpTarget
 
 
 class AssessmentRunnerTests(TestCase):
@@ -62,3 +64,41 @@ class AssessmentRunnerTests(TestCase):
             with self.subTest(current_date=current_date):
                 runner = AssessmentRunner(self.contract, self.target, today=lambda: current_date)
                 self.assertEqual(runner.run("inside"), "local response")
+
+    @patch("kimura_assessment.runner.JsonPostAdapter")
+    def test_run_result_captures_only_deterministic_safe_metadata(self, adapter_type):
+        adapter_type.return_value.post.return_value = "local response"
+        runner = AssessmentRunner(self.contract, self.target, today=lambda: date(2026, 8, 21))
+
+        result = runner.run_result("input that must not be stored", {"secret": "request value"})
+
+        self.assertIsInstance(result, AssessmentResult)
+        self.assertEqual(result.to_dict(), {
+            "schema_version": 1,
+            "assessment_id": "asm-runner",
+            "execution_number": 1,
+            "authorization_date": "2026-08-21",
+            "status": "completed",
+            "response_length": len("local response".encode("utf-8")),
+            "response_sha256": hashlib.sha256(b"local response").hexdigest(),
+        })
+        encoded = result.to_json()
+        self.assertEqual(encoded, result.to_json())
+        self.assertEqual(json.loads(encoded), result.to_dict())
+        self.assertNotIn("input that must not be stored", encoded)
+        self.assertNotIn("request value", encoded)
+        self.assertNotIn("local response", encoded)
+        self.assertEqual(adapter_type.return_value.post.call_count, 1)
+
+    @patch("kimura_assessment.runner.JsonPostAdapter")
+    def test_run_and_run_result_share_one_execution_path_and_budget(self, adapter_type):
+        adapter_type.return_value.post.side_effect = ["one", "two"]
+        runner = AssessmentRunner(self.contract, self.target, today=lambda: date(2026, 8, 21))
+
+        self.assertEqual(runner.run("first"), "one")
+        result = runner.run_result("second")
+
+        self.assertEqual(result.execution_number, 2)
+        with self.assertRaises(AssessmentExecutionError):
+            runner.run_result("third")
+        self.assertEqual(adapter_type.return_value.post.call_count, 2)

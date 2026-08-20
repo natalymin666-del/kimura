@@ -9,12 +9,14 @@ from .http_adapter import (
     TargetRequestError,
     credential_environment_name,
 )
+from .results import AssessmentResult
 from .runner import AssessmentExecutionError, AssessmentRunner
 
 __all__ = [
     "AssessmentContract",
     "AssessmentExecutionError",
     "AssessmentRunner",
+    "AssessmentResult",
     "AssessmentTargetError",
     "ContractValidationError",
     "CredentialResolutionError",

@@ -1,5 +1,6 @@
 import json
 from datetime import date
+import hashlib
 import os
 import threading
 import unittest
@@ -78,6 +79,18 @@ class HttpAdapterTests(unittest.TestCase):
         self.assertEqual(_Handler.requests[0][0], "/v1/chat")
         self.assertEqual(_Handler.requests[0][1], "Bearer runtime-" + str(self.server.server_port))
         self.assertEqual(_Handler.requests[0][2]["messages"][0]["content"], "hello")
+
+    def test_run_result_captures_safe_metadata_without_credential(self):
+        target = HttpTarget(self.endpoint, "messages.0.content", "choices.0.message.content", self.reference)
+        result = AssessmentRunner(self.contract, target).run_result("hello", {"messages": [{"role": "user"}]})
+
+        self.assertEqual(result.assessment_id, "asm-local")
+        self.assertEqual(result.execution_number, 1)
+        self.assertEqual(result.authorization_date, date(2026, 8, 20))
+        self.assertEqual(result.response_length, len(b"local response"))
+        self.assertEqual(result.response_sha256, hashlib.sha256(b"local response").hexdigest())
+        self.assertNotIn("runtime-", result.to_json())
+        self.assertNotIn("local response", result.to_json())
 
     def test_out_of_scope_target_is_rejected_before_request(self):
         target = HttpTarget(self.endpoint.replace(f":{self.server.server_port}", ":1"), "content", "content", self.reference)
