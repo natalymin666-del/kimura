@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kimura-assessment"
+version = "0.1.0"
+description = "Bounded, metadata-only HTTP assessment workflow"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Kimura Security" }]
+dependencies = []
+
+[project.scripts]
+kimura-assessment = "kimura_assessment.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["kimura_assessment*"]
