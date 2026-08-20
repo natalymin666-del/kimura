@@ -1,0 +1,80 @@
+"""Minimal command-line entry point for one authorized assessment interaction."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+from .http_adapter import HttpTarget
+from .runner import AssessmentRunner
+from .schema import AssessmentContract
+
+
+class AssessmentConfigError(ValueError):
+    """Raised when the local CLI configuration cannot be used safely."""
+
+
+def _load_config(path: Path) -> dict[str, Any]:
+    try:
+        with path.open(encoding="utf-8") as handle:
+            values = json.load(handle)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AssessmentConfigError("assessment configuration could not be read") from exc
+    if not isinstance(values, dict):
+        raise AssessmentConfigError("assessment configuration must be a JSON object")
+    return values
+
+
+def _build_from_config(values: dict[str, Any]) -> tuple[AssessmentContract, HttpTarget, str, Any]:
+    contract_values = values.get("contract")
+    target_values = values.get("target")
+    if not isinstance(contract_values, dict) or not isinstance(target_values, dict):
+        raise AssessmentConfigError("configuration requires contract and target objects")
+
+    try:
+        contract = AssessmentContract.from_dict(contract_values)
+        target = HttpTarget(
+            endpoint=target_values["endpoint"],
+            input_path=target_values["input_path"],
+            response_path=target_values["response_path"],
+            credential_reference=target_values["credential_reference"],
+            timeout=target_values.get("timeout", 15.0),
+            max_response_bytes=target_values.get("max_response_bytes", 1_048_576),
+        )
+        input_text = values["input_text"]
+        request_json = values.get("request_json", {})
+    except (KeyError, TypeError, ValueError) as exc:
+        raise AssessmentConfigError("assessment configuration is invalid") from exc
+
+    if not isinstance(input_text, str) or not isinstance(request_json, (dict, list)):
+        raise AssessmentConfigError("input_text must be a string and request_json must be an object or array")
+    return contract, target, input_text, request_json
+
+
+def run_config(path: Path) -> str:
+    """Execute one configured interaction and return safe result JSON only."""
+
+    contract, target, input_text, request_json = _build_from_config(_load_config(path))
+    result = AssessmentRunner(contract, target).run_result(input_text, request_json)
+    return result.to_json()
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
+    parser.add_argument("config", type=Path, help="local JSON assessment configuration")
+    args = parser.parse_args(argv)
+
+    try:
+        print(run_config(args.config))
+    except AssessmentConfigError as exc:
+        parser.error(str(exc))
+    except Exception:
+        # Keep operational failures free of target, request, response, and credential data.
+        parser.error("assessment could not be completed")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
