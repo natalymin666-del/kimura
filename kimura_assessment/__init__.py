@@ -10,6 +10,8 @@ from .http_adapter import (
     credential_environment_name,
 )
 from .results import AssessmentResult
+from .persistence import AssessmentResultStore, PersistenceError
+from .report import build_report, report_from_store, report_json_from_store, write_report
 from .runner import AssessmentExecutionError, AssessmentRunner
 
 __all__ = [
@@ -17,11 +19,17 @@ __all__ = [
     "AssessmentExecutionError",
     "AssessmentRunner",
     "AssessmentResult",
+    "AssessmentResultStore",
     "AssessmentTargetError",
     "ContractValidationError",
     "CredentialResolutionError",
     "HttpTarget",
     "JsonPostAdapter",
     "TargetRequestError",
+    "PersistenceError",
+    "build_report",
+    "report_from_store",
+    "report_json_from_store",
+    "write_report",
     "credential_environment_name",
 ]

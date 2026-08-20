@@ -80,3 +80,25 @@ class AssessmentResult:
         """Serialize the result deterministically."""
 
         return json.dumps(self.to_dict(), sort_keys=True)
+
+    @classmethod
+    def from_dict(cls, values: dict[str, Any]) -> "AssessmentResult":
+        """Restore a result while rejecting fields outside the safe contract."""
+
+        if not isinstance(values, dict):
+            raise ValueError("result data must be a JSON object")
+        expected = {
+            "schema_version", "assessment_id", "execution_number",
+            "authorization_date", "status", "response_length", "response_sha256",
+        }
+        if set(values) != expected:
+            raise ValueError("result contains unexpected or missing fields")
+        data = dict(values)
+        try:
+            data["authorization_date"] = date.fromisoformat(data["authorization_date"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("authorization_date must be an ISO-8601 date string") from exc
+        try:
+            return cls(**data)
+        except TypeError as exc:
+            raise ValueError("result fields are malformed") from exc

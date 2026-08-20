@@ -3,12 +3,14 @@ import os
 import tempfile
 import threading
 import unittest
+from datetime import date
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
 from kimura_assessment import AssessmentTargetError, CredentialResolutionError
 from kimura_assessment.cli import AssessmentConfigError, run_config
+from kimura_assessment import AssessmentResult
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -140,6 +142,28 @@ class CliWorkflowTests(unittest.TestCase):
                 runner_type.return_value.run_result.assert_called_once()
         finally:
             path.unlink()
+
+    def test_optional_persistence_and_report_do_not_change_result_output(self):
+        path = self.write_config()
+        persist_path = Path(tempfile.mktemp(suffix=".jsonl"))
+        report_path = Path(tempfile.mktemp(suffix=".json"))
+        result = AssessmentResult.completed("asm-cli", 1, date(2026, 8, 20), "not stored")
+        try:
+            with patch("kimura_assessment.cli.AssessmentRunner") as runner_type:
+                runner_type.return_value.run_result.return_value = result
+                self.assertEqual(
+                    run_config(path, persist_path=persist_path, report_path=report_path),
+                    result.to_json(),
+                )
+            persisted = json.loads(persist_path.read_text(encoding="utf-8"))
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted, result.to_dict())
+            self.assertEqual(report["result_count"], 1)
+            self.assertNotIn("not stored", report_path.read_text(encoding="utf-8"))
+        finally:
+            path.unlink()
+            persist_path.unlink(missing_ok=True)
+            report_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

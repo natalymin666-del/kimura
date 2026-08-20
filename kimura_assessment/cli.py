@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .http_adapter import HttpTarget
+from .persistence import AssessmentResultStore
+from .report import write_report
 from .runner import AssessmentRunner
 from .schema import AssessmentContract
 
@@ -53,21 +55,30 @@ def _build_from_config(values: dict[str, Any]) -> tuple[AssessmentContract, Http
     return contract, target, input_text, request_json
 
 
-def run_config(path: Path) -> str:
+def run_config(path: Path, *, persist_path: Path | None = None, report_path: Path | None = None) -> str:
     """Execute one configured interaction and return safe result JSON only."""
 
     contract, target, input_text, request_json = _build_from_config(_load_config(path))
     result = AssessmentRunner(contract, target).run_result(input_text, request_json)
+    if persist_path is not None:
+        store = AssessmentResultStore(persist_path)
+        store.append(result)
+        if report_path is not None:
+            write_report(store, report_path)
     return result.to_json()
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
     parser.add_argument("config", type=Path, help="local JSON assessment configuration")
+    parser.add_argument("--persist", type=Path, help="append the safe result to a local JSONL file")
+    parser.add_argument("--report", type=Path, help="write a safe report from the persisted JSONL results")
     args = parser.parse_args(argv)
 
     try:
-        print(run_config(args.config))
+        if args.report is not None and args.persist is None:
+            parser.error("--report requires --persist")
+        print(run_config(args.config, persist_path=args.persist, report_path=args.report))
     except AssessmentConfigError as exc:
         parser.error(str(exc))
     except Exception:
