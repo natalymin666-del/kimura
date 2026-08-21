@@ -58,8 +58,8 @@ class HttpAdapterTests(unittest.TestCase):
             authorized_by="approval-local",
             objectives=("test one authorized endpoint",),
             scope=(f"http://127.0.0.1:{self.server.server_port}",),
-            start_date=date(2026, 8, 20),
-            end_date=date(2026, 8, 20),
+            start_date=date.today(),
+            end_date=date.today(),
             credential_references=(self.reference,),
         )
         self.previous = os.environ.get("KIMURA_TEST_RUNTIME_CREDENTIAL")
@@ -86,7 +86,7 @@ class HttpAdapterTests(unittest.TestCase):
 
         self.assertEqual(result.assessment_id, "asm-local")
         self.assertEqual(result.execution_number, 1)
-        self.assertEqual(result.authorization_date, date(2026, 8, 20))
+        self.assertEqual(result.authorization_date, date.today())
         self.assertEqual(result.response_length, len(b"local response"))
         self.assertEqual(result.response_sha256, hashlib.sha256(b"local response").hexdigest())
         self.assertNotIn("runtime-", result.to_json())
