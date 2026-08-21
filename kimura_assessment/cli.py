@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .demo import run_demo
 from .http_adapter import HttpTarget
 from .persistence import AssessmentResultStore
 from .report import write_report
@@ -69,6 +70,13 @@ def run_config(path: Path, *, persist_path: Path | None = None, report_path: Pat
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        import sys
+
+        argv = sys.argv[1:]
+    if argv and argv[0] == "demo":
+        return _main_demo(argv[1:])
+
     parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
     parser.add_argument("config", type=Path, help="local JSON assessment configuration")
     parser.add_argument("--persist", type=Path, help="append the safe result to a local JSONL file")
@@ -84,6 +92,20 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:
         # Keep operational failures free of target, request, response, and credential data.
         parser.error("assessment could not be completed")
+    return 0
+
+
+def _main_demo(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run the local Conference Demo v1")
+    parser.add_argument("--persist", type=Path, help="append the safe result to a local JSONL file")
+    parser.add_argument("--report", type=Path, help="write a safe report from the persisted JSONL results")
+    args = parser.parse_args(argv)
+    try:
+        if args.report is not None and args.persist is None:
+            parser.error("--report requires --persist")
+        print(run_demo(persist_path=args.persist, report_path=args.report))
+    except Exception:
+        parser.error("conference demo could not be completed")
     return 0
 
 

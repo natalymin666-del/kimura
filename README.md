@@ -84,6 +84,22 @@ kimura-assessment assessment.json \
   --report results/assessment-report.json
 ```
 
+For a deterministic, local-only Conference Demo v1, run:
+
+```console
+python3 -m kimura_assessment demo
+```
+
+The demo uses only a loopback mock server, a fixed non-secret placeholder
+credential, and the same contract, runner, persistence, and reporting safety
+paths as a configured assessment. To also write safe local metadata files:
+
+```console
+python3 -m kimura_assessment demo \
+  --persist results/conference-demo.jsonl \
+  --report results/conference-demo-report.json
+```
+
 ## Persistence and reporting
 
 `--persist` appends one deterministic JSON object per line to a local JSONL
