@@ -90,6 +90,18 @@ For a deterministic, local-only Conference Demo v1, run:
 python3 -m kimura_assessment demo
 ```
 
+For the deterministic local Conference Demo v2, run:
+
+```console
+python3 -m kimura_assessment demo-v2
+```
+
+Demo v2 exercises a deliberately vulnerable local agent, validates an
+unauthorized synthetic tool action from its audit ledger, applies a local tool
+policy, and replays the identical fixture to demonstrate a passing retest.
+Evidence stores hashes and safe facts only; it does not persist raw requests,
+responses, documents, or credentials.
+
 The demo uses only a loopback mock server, a fixed non-secret placeholder
 credential, and the same contract, runner, persistence, and reporting safety
 paths as a configured assessment. To also write safe local metadata files:

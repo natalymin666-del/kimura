@@ -13,6 +13,10 @@ from .results import AssessmentResult
 from .persistence import AssessmentResultStore, PersistenceError
 from .report import build_report, report_from_store, report_json_from_store, write_report
 from .runner import AssessmentExecutionError, AssessmentRunner
+from .evidence import EvidenceRecord, EvidenceStore, EvidenceValidationError, digest_text
+from .findings import Finding, FindingValidationError
+from .risk import RiskEvaluator
+from .scenarios import AgentDemoContract, ScenarioFixture
 
 __all__ = [
     "AssessmentContract",
@@ -32,4 +36,13 @@ __all__ = [
     "report_json_from_store",
     "write_report",
     "credential_environment_name",
+    "AgentDemoContract",
+    "ScenarioFixture",
+    "EvidenceRecord",
+    "EvidenceStore",
+    "EvidenceValidationError",
+    "Finding",
+    "FindingValidationError",
+    "RiskEvaluator",
+    "digest_text",
 ]
