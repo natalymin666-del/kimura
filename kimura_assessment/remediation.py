@@ -12,3 +12,8 @@ class RemediationController:
     def apply(self) -> str:
         self._app.enable_tool_policy()
         return "tool-policy-deny-untrusted-external-actions"
+
+    def apply_data_policy(self) -> str:
+        """Install the explicit policy governing synthetic sensitive data tools."""
+        self._app.enable_data_policy()
+        return "data-tool-policy-deny-untrusted-sensitive-data-egress"

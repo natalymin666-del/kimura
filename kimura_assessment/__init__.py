@@ -16,7 +16,7 @@ from .runner import AssessmentExecutionError, AssessmentRunner
 from .evidence import EvidenceRecord, EvidenceStore, EvidenceValidationError, digest_text
 from .findings import Finding, FindingValidationError
 from .risk import RiskEvaluator
-from .scenarios import AgentDemoContract, ScenarioFixture
+from .scenarios import AgentDemoContract, ScenarioFixture, DEMO_V3_SCENARIOS, EXFIL_CONTRACT, EXFIL_FIXTURE
 
 __all__ = [
     "AssessmentContract",
@@ -38,6 +38,9 @@ __all__ = [
     "credential_environment_name",
     "AgentDemoContract",
     "ScenarioFixture",
+    "DEMO_V3_SCENARIOS",
+    "EXFIL_CONTRACT",
+    "EXFIL_FIXTURE",
     "EvidenceRecord",
     "EvidenceStore",
     "EvidenceValidationError",

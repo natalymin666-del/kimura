@@ -9,6 +9,7 @@ from typing import Any
 
 from .demo import run_demo
 from .demo_v2 import run_demo_v2
+from .demo_v3 import run_demo_v3
 from .http_adapter import HttpTarget
 from .persistence import AssessmentResultStore
 from .report import write_report
@@ -79,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
         return _main_demo(argv[1:])
     if argv and argv[0] == "demo-v2":
         return _main_demo_v2(argv[1:])
+    if argv and argv[0] == "demo-v3":
+        return _main_demo_v3(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
     parser.add_argument("config", type=Path, help="local JSON assessment configuration")
@@ -123,6 +126,21 @@ def _main_demo_v2(argv: list[str]) -> int:
         print(run_demo_v2(persist_path=args.persist, report_path=args.report))
     except Exception:
         parser.error("conference demo v2 could not be completed")
+    return 0
+
+
+
+def _main_demo_v3(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run the local Kimura Agent Security Assessment Demo v3")
+    parser.add_argument("--persist", type=Path, help="append safe evidence to a local JSONL file")
+    parser.add_argument("--report", type=Path, help="write the consolidated safe assessment report")
+    args = parser.parse_args(argv)
+    try:
+        if args.report is not None and args.persist is None:
+            parser.error("--report requires --persist")
+        print(run_demo_v3(persist_path=args.persist, report_path=args.report))
+    except Exception:
+        parser.error("agent security demo v3 could not be completed")
     return 0
 
 
