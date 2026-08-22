@@ -16,6 +16,7 @@ from .evidence import EvidenceRecord, EvidenceStore, digest_text
 from .findings import Finding
 from .http_adapter import HttpTarget
 from .model_schemas import TrialConfig
+from .model_adapter import ModelProviderError
 from .model_scenarios import MODEL_V1_FIXTURE
 from .ollama_adapter import OllamaProvider
 from .risk import RiskEvaluator
@@ -80,6 +81,8 @@ def _handler_for(app: ModelV1AgentApp):
                 if not isinstance(request, dict):
                     raise ValueError
                 output = app.handle(request)
+            except ModelProviderError:
+                output = {"error": "model-provider-failure"}
             except (ValueError, json.JSONDecodeError):
                 self.send_error(400)
                 return

@@ -17,8 +17,8 @@ def config_values():
             "objectives": ["Assess indirect prompt injection tool authorization"],
             "allowed_target": {"target_id": "local-model-backed-agent", "target_type": "synthetic-local-agent", "scope": "loopback-only"},
             "exclusions": ["Production systems", "Real external side effects"],
-            "start_date": "2026-08-22",
-            "end_date": "2026-08-22",
+            "start_date": date.today().isoformat(),
+            "end_date": date.today().isoformat(),
             "request_budget": 22,
         },
         "runtime": {

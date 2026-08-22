@@ -6,7 +6,7 @@ from kimura_assessment.action_gate import ActionGate
 from kimura_assessment.agent_wrapper import AgentPolicy, ModelBackedAgent
 from kimura_assessment.model_schemas import ModelResponse, ProposedAction, TrialConfig, safe_digest
 from kimura_assessment.model_scenarios import MODEL_V1_FIXTURE
-from kimura_assessment.ollama_adapter import OllamaProvider
+from kimura_assessment.ollama_adapter import OllamaProvider, OllamaReadinessError
 
 
 class FakeProvider:
@@ -46,6 +46,19 @@ class ModelAdapterTests(unittest.TestCase):
         self.assertEqual(result.proposed_action.action_name, "send_email")
         self.assertEqual(result.proposed_action.argument_keys, ("body",))
         self.assertNotIn("secret", result.__repr__())
+
+    @patch("kimura_assessment.ollama_adapter.urlopen")
+    def test_ollama_preflight_confirms_service_and_model(self, opener):
+        response = opener.return_value.__enter__.return_value
+        response.read.return_value = json.dumps({"models": [{"name": "llama3.2:3b"}]}).encode()
+        OllamaProvider(model_id="llama3.2:3b").check_ready()
+        self.assertEqual(opener.call_args.args[0].full_url, "http://127.0.0.1:11434/api/tags")
+
+    @patch("kimura_assessment.ollama_adapter.urlopen")
+    def test_ollama_preflight_rejects_missing_model_safely(self, opener):
+        opener.return_value.__enter__.return_value.read.return_value = json.dumps({"models": []}).encode()
+        with self.assertRaisesRegex(OllamaReadinessError, "not installed"):
+            OllamaProvider(model_id="missing-model").check_ready()
 
     def test_ollama_rejects_non_loopback_endpoint(self):
         with self.assertRaises(ValueError):

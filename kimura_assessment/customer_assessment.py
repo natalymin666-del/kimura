@@ -14,18 +14,26 @@ from typing import Any, Callable, Iterator
 from .customer_schema import CustomerAssessmentConfig
 from .demo_model_v1 import ModelV1AgentApp, _agent_server
 from .evidence import EvidenceRecord, EvidenceStore, digest_text
-from .http_adapter import HttpTarget, credential_environment_name
+from .http_adapter import HttpTarget, TargetRequestError, credential_environment_name
 from .model_scenarios import MODEL_V1_FIXTURE
 from .ollama_adapter import OllamaProvider
 from .remediation import RemediationController
 from .risk import RiskEvaluator
-from .runner import AssessmentRunner
+from .runner import AssessmentExecutionError, AssessmentRunner
 from .schema import AssessmentContract
 
 
 REPORT_SCHEMA_VERSION = 1
 RUNTIME_ID = "ollama-local"
 _SYNTHETIC_CREDENTIAL = "customer-assessment-v1-local-transport-only"
+
+
+class CustomerModelError(RuntimeError):
+    """Raised when the configured model cannot complete a trial."""
+
+
+class CustomerAdapterError(RuntimeError):
+    """Raised when the synthetic HTTP adapter cannot complete an operation."""
 
 
 @contextmanager
@@ -85,7 +93,11 @@ class CustomerAssessmentResult:
             store.append(record)
         html = html_renderer(self.report, self.evidence)
         (directory / "report.html").write_text(html, encoding="utf-8", newline="\n")
-        report_hash = hashlib.sha256((directory / "assessment.json").read_bytes()).hexdigest()
+        artifact_hashes = {
+            "assessment.json": hashlib.sha256((directory / "assessment.json").read_bytes()).hexdigest(),
+            "evidence.jsonl": hashlib.sha256((directory / "evidence.jsonl").read_bytes()).hexdigest(),
+            "report.html": hashlib.sha256((directory / "report.html").read_bytes()).hexdigest(),
+        }
         manifest = {
             "schema_version": 1,
             "assessment_id": self.report["assessment"]["assessment_id"],
@@ -100,7 +112,9 @@ class CustomerAssessmentResult:
             },
             "finding_count": len(self.report["findings"]),
             "evidence_count": len(self.evidence),
-            "report_hash": report_hash,
+            "artifact_hashes": artifact_hashes,
+            "assessment_hash": artifact_hashes["assessment.json"],
+            "report_hash": artifact_hashes["report.html"],
         }
         (directory / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8", newline="\n")
 
@@ -114,11 +128,23 @@ def run_customer_assessment(
 ) -> CustomerAssessmentResult:
     """Run one explicitly configured, local-only Customer Assessment v1."""
 
-    preflight = config.preflight()
+    preflight = config.preflight() if provider_factory is None else (
+        "Customer configuration: VALID",
+        "Authorization contract: VALID",
+        "Target: local-model-backed-agent (synthetic local target)",
+        "Runtime: Ollama loopback-only (injected test provider)",
+        f"Model: {config.runtime.model_id}",
+        f"Scenarios: {', '.join(item.scenario_id for item in config.scenarios)}",
+        f"Trials: {sum(item.trials for item in config.scenarios)} baseline + {sum(item.trials for item in config.scenarios)} retest",
+        f"Request budget: {config.request_budget}",
+        "Credentials: reference-only",
+        "External targets and real side effects: prohibited",
+    )
+    current_date = today()
+    if current_date < config.start_date or current_date > config.end_date:
+        raise AssessmentExecutionError("assessment is outside its authorized date window")
     for line in preflight:
         preflight_writer(line)
-    if today() < config.start_date or today() > config.end_date:
-        raise ValueError("assessment is outside its authorized date window")
 
     provider = provider_factory(config) if provider_factory is not None else OllamaProvider(config.runtime.endpoint, model_id=config.runtime.model_id)
     if hasattr(provider, "model_id"):
@@ -230,8 +256,13 @@ class _CustomerTarget:
 
     def call(self, operation: str, **values: object) -> tuple[dict[str, object], str, str]:
         payload = {"operation": operation, **values}
-        raw = self._runner.run(operation, payload)
+        try:
+            raw = self._runner.run(operation, payload)
+        except TargetRequestError as exc:
+            raise CustomerAdapterError(f"synthetic adapter failure ({exc})") from None
         response = json.loads(raw)
         if not isinstance(response, dict):
-            raise RuntimeError("customer assessment target returned invalid structured output")
+            raise CustomerAdapterError("synthetic adapter returned invalid structured output")
+        if response.get("error") == "model-provider-failure":
+            raise CustomerModelError("model provider failed during assessment")
         return response, digest_text(json.dumps(payload, sort_keys=True)), digest_text(raw)

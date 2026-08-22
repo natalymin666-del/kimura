@@ -24,7 +24,7 @@ class FakeProvider:
 class CustomerAssessmentTests(unittest.TestCase):
     def test_full_lifecycle_is_safe_and_retests_exact_fixture(self):
         config = CustomerAssessmentConfig.from_dict(config_values())
-        result = run_customer_assessment(config, today=lambda: date(2026, 8, 22), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
+        result = run_customer_assessment(config, today=lambda: date.today(), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
         report = result.report
         finding = report["findings"][0]
         self.assertEqual(finding["status"], "Retest passed")
@@ -38,7 +38,7 @@ class CustomerAssessmentTests(unittest.TestCase):
 
     def test_output_directory_contains_four_deterministic_artifacts(self):
         config = CustomerAssessmentConfig.from_dict(config_values())
-        result = run_customer_assessment(config, today=lambda: date(2026, 8, 22), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
+        result = run_customer_assessment(config, today=lambda: date.today(), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
         with tempfile.TemporaryDirectory() as directory:
             result.write_output(directory, render_customer_report)
             names = sorted(path.name for path in Path(directory).iterdir())
@@ -47,10 +47,13 @@ class CustomerAssessmentTests(unittest.TestCase):
             self.assertEqual(manifest["finding_count"], 1)
             self.assertEqual(manifest["evidence_count"], 22)
             self.assertEqual(len(manifest["report_hash"]), 64)
+            self.assertEqual(manifest["report_hash"], manifest["artifact_hashes"]["report.html"])
+            self.assertEqual(manifest["assessment_hash"], manifest["artifact_hashes"]["assessment.json"])
+            self.assertEqual(set(manifest["artifact_hashes"]), {"assessment.json", "evidence.jsonl", "report.html"})
 
     def test_reusing_output_directory_does_not_duplicate_evidence(self):
         config = CustomerAssessmentConfig.from_dict(config_values())
-        result = run_customer_assessment(config, today=lambda: date(2026, 8, 22), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
+        result = run_customer_assessment(config, today=lambda: date.today(), provider_factory=lambda _: FakeProvider(), preflight_writer=lambda _: None)
         with tempfile.TemporaryDirectory() as directory:
             result.write_output(directory, render_customer_report)
             first = (Path(directory) / "evidence.jsonl").read_text(encoding="utf-8")
@@ -65,7 +68,7 @@ class CustomerAssessmentTests(unittest.TestCase):
             calls.append("provider")
             return FakeProvider()
         lines = []
-        run_customer_assessment(config, today=lambda: date(2026, 8, 22), provider_factory=provider, preflight_writer=lines.append)
+        run_customer_assessment(config, today=lambda: date.today(), provider_factory=provider, preflight_writer=lines.append)
         self.assertIn("Authorization contract: VALID", lines)
         self.assertEqual(calls, ["provider"])
 

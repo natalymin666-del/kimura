@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 from .model_adapter import ModelProviderError
@@ -28,6 +28,31 @@ class OllamaProvider:
         self._endpoint = endpoint
         self._max_response_bytes = max_response_bytes
         self.model_id = model_id
+
+    def check_ready(self) -> None:
+        """Verify the loopback service is reachable and the requested model exists."""
+
+        if not self.model_id:
+            raise OllamaReadinessError("no Ollama model was configured")
+        tags_endpoint = urljoin(self._endpoint, "tags")
+        try:
+            request = Request(tags_endpoint, method="GET", headers={"Accept": "application/json"})
+            with urlopen(request, timeout=5.0) as response:
+                raw = response.read(self._max_response_bytes + 1)
+        except HTTPError as exc:
+            raise OllamaReadinessError(f"Ollama runtime returned HTTP {exc.code}") from None
+        except (URLError, TimeoutError, OSError) as exc:
+            raise OllamaReadinessError(f"Ollama runtime is unreachable ({type(exc).__name__})") from None
+        if len(raw) > self._max_response_bytes:
+            raise OllamaReadinessError("Ollama model list exceeded the response size limit")
+        try:
+            decoded = json.loads(raw.decode("utf-8"))
+            models = decoded["models"]
+            names = {item["name"] for item in models if isinstance(item, dict) and isinstance(item.get("name"), str)}
+        except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):
+            raise OllamaReadinessError("Ollama returned an invalid model list") from None
+        if self.model_id not in names:
+            raise OllamaReadinessError(f"configured Ollama model is not installed: {self.model_id}")
 
     def complete(self, request: ModelRequest) -> ModelResponse:
         settings = request.settings
@@ -90,3 +115,7 @@ class OllamaProvider:
             response_length=len(raw),
             latency_ms=int((time.monotonic() - started) * 1000),
         )
+
+
+class OllamaReadinessError(RuntimeError):
+    """Raised when the local Ollama runtime cannot satisfy preflight."""

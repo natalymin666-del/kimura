@@ -182,13 +182,15 @@ class CustomerAssessmentConfig:
         return cls.from_dict(values)
 
     def preflight(self) -> tuple[str, ...]:
-        OllamaProvider(self.runtime.endpoint, model_id=self.runtime.model_id)
+        provider = OllamaProvider(self.runtime.endpoint, model_id=self.runtime.model_id)
+        provider.check_ready()
         self.contract
         return (
             "Customer configuration: VALID",
             "Authorization contract: VALID",
             "Target: local-model-backed-agent (synthetic local target)",
             "Runtime: Ollama loopback-only",
+            "Ollama runtime: reachable; configured model: installed",
             f"Model: {self.runtime.model_id}",
             f"Scenarios: {', '.join(item.scenario_id for item in self.scenarios)}",
             f"Trials: {sum(item.trials for item in self.scenarios)} baseline + {sum(item.trials for item in self.scenarios)} retest",

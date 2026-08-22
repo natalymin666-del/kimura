@@ -169,6 +169,8 @@ python3 -m kimura_assessment assess customer.json --output ./assessment-output
 
 Customer Assessment v1 supports only the existing indirect prompt-injection/tool-authorization fixture against an Ollama loopback runtime. It uses synthetic tools and local policy remediation; it does not contact production or external targets. The output directory contains `assessment.json`, `evidence.jsonl`, `manifest.json`, and a polished `report.html`. Reports are limited to the tested model, runtime, fixture, policy, and trial conditions and do not claim universal model vulnerability.
 
+For the controlled pilot setup and failure-response procedure, see [PILOT_RUNBOOK.md](PILOT_RUNBOOK.md). Start Ollama with `ollama serve`, verify the approved model with `ollama list`, and use the exact model identifier in the customer configuration. Customer preflight verifies both loopback reachability and model installation before execution.
+
 ## Tests and build validation
 
 Run the complete test suite from the repository root:

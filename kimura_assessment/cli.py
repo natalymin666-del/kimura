@@ -12,13 +12,14 @@ from .demo_v2 import run_demo_v2
 from .demo_v3 import run_demo_v3
 from .demo_model_v1 import run_model_v1
 from .calibration import run_ollama_calibration, run_ollama_controls
-from .customer_assessment import run_customer_assessment
+from .customer_assessment import CustomerAdapterError, CustomerModelError, run_customer_assessment
 from .customer_schema import CustomerAssessmentConfig, CustomerConfigError
 from .http_adapter import HttpTarget
 from .html_report import render_customer_report
 from .persistence import AssessmentResultStore
 from .report import write_report
-from .runner import AssessmentRunner
+from .runner import AssessmentExecutionError, AssessmentRunner
+from .ollama_adapter import OllamaReadinessError
 from .schema import AssessmentContract
 
 
@@ -233,10 +234,22 @@ def _main_customer_assessment(argv: list[str]) -> int:
         result = run_customer_assessment(config)
         result.write_output(args.output, render_customer_report)
         _print_customer_summary(result.report, args.output)
-    except (CustomerConfigError, ValueError, OSError):
-        parser.error("customer assessment could not be completed")
+    except CustomerConfigError as exc:
+        parser.error(f"configuration error: {exc}")
+    except OllamaReadinessError as exc:
+        parser.error(f"runtime preflight error: {exc}")
+    except CustomerModelError as exc:
+        parser.error(f"model failure: {exc}")
+    except CustomerAdapterError as exc:
+        parser.error(f"adapter failure: {exc}")
+    except AssessmentExecutionError as exc:
+        parser.error(f"assessment execution failure: {exc}")
+    except OSError as exc:
+        parser.error(f"output failure: {type(exc).__name__}")
+    except ValueError as exc:
+        parser.error(f"assessment result failure: {exc}")
     except Exception:
-        parser.error("customer assessment could not be completed")
+        parser.error("assessment internal failure; inspect the local runtime and configuration")
     return 0
 
 

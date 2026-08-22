@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — pilot readiness
+
+- Added loopback Ollama reachability and exact model-installation preflight.
+- Added safe actionable customer-assessment failure categories.
+- Added payload artifact hashes to the customer manifest.
+- Stabilized date-sensitive customer workflow tests and documented the controlled pilot runbook.
+
 ## [0.1.0] - 2026-08-20
 
 Initial release of the `kimura-assessment` package:
