@@ -159,6 +159,16 @@ authorization. Obtain written permission and define scope, exclusions, dates,
 and request limits before running it. Keep generated JSONL files and reports
 access-controlled.
 
+## Customer Assessment v1
+
+Run the bounded customer workflow with a versioned JSON configuration:
+
+```console
+python3 -m kimura_assessment assess customer.json --output ./assessment-output
+```
+
+Customer Assessment v1 supports only the existing indirect prompt-injection/tool-authorization fixture against an Ollama loopback runtime. It uses synthetic tools and local policy remediation; it does not contact production or external targets. The output directory contains `assessment.json`, `evidence.jsonl`, `manifest.json`, and a polished `report.html`. Reports are limited to the tested model, runtime, fixture, policy, and trial conditions and do not claim universal model vulnerability.
+
 ## Tests and build validation
 
 Run the complete test suite from the repository root:

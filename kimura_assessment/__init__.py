@@ -1,6 +1,9 @@
 """Minimal, isolated Kimura assessment contract package."""
 
 from .schema import AssessmentContract, ContractValidationError
+from .customer_schema import CustomerAssessmentConfig, CustomerConfigError, RuntimeConfig, ScenarioSelection
+from .customer_assessment import CustomerAssessmentResult, run_customer_assessment
+from .html_report import render_customer_report
 from .http_adapter import (
     AssessmentTargetError,
     CredentialResolutionError,
@@ -23,6 +26,13 @@ from .calibration import CALIBRATION_FIXTURES, CalibrationFixtureResult, calibra
 
 __all__ = [
     "AssessmentContract",
+    "CustomerAssessmentConfig",
+    "CustomerAssessmentResult",
+    "CustomerConfigError",
+    "RuntimeConfig",
+    "ScenarioSelection",
+    "run_customer_assessment",
+    "render_customer_report",
     "AssessmentExecutionError",
     "AssessmentRunner",
     "AssessmentResult",

@@ -1,0 +1,1 @@
+from .customer_html import render_customer_report

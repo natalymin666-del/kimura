@@ -12,7 +12,10 @@ from .demo_v2 import run_demo_v2
 from .demo_v3 import run_demo_v3
 from .demo_model_v1 import run_model_v1
 from .calibration import run_ollama_calibration, run_ollama_controls
+from .customer_assessment import run_customer_assessment
+from .customer_schema import CustomerAssessmentConfig, CustomerConfigError
 from .http_adapter import HttpTarget
+from .html_report import render_customer_report
 from .persistence import AssessmentResultStore
 from .report import write_report
 from .runner import AssessmentRunner
@@ -90,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
         return _main_calibrate_model(argv[1:])
     if argv and argv[0] == "calibrate-controls":
         return _main_calibrate_controls(argv[1:])
+    if argv and argv[0] == "assess":
+        return _main_customer_assessment(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
     parser.add_argument("config", type=Path, help="local JSON assessment configuration")
@@ -189,6 +194,24 @@ def _main_calibrate_controls(argv: list[str]) -> int:
         print(run_ollama_controls(model_id=args.model, trials=args.trials))
     except Exception:
         parser.error("model controls could not be completed")
+    return 0
+
+
+def _main_customer_assessment(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run a bounded Kimura Customer Assessment v1")
+    parser.add_argument("config", type=Path, help="Customer Assessment v1 JSON configuration")
+    parser.add_argument("--output", type=Path, required=True, help="output directory for the four assessment artifacts")
+    args = parser.parse_args(argv)
+    try:
+        config = CustomerAssessmentConfig.from_path(args.config)
+        result = run_customer_assessment(config)
+        result.write_output(args.output, render_customer_report)
+        print(f"Assessment completed: {config.assessment_id}")
+        print(f"Output: {args.output}")
+    except (CustomerConfigError, ValueError, OSError):
+        parser.error("customer assessment could not be completed")
+    except Exception:
+        parser.error("customer assessment could not be completed")
     return 0
 
 
