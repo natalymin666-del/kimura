@@ -10,6 +10,8 @@ from typing import Any
 from .demo import run_demo
 from .demo_v2 import run_demo_v2
 from .demo_v3 import run_demo_v3
+from .demo_model_v1 import run_model_v1
+from .calibration import run_ollama_calibration, run_ollama_controls
 from .http_adapter import HttpTarget
 from .persistence import AssessmentResultStore
 from .report import write_report
@@ -82,6 +84,12 @@ def main(argv: list[str] | None = None) -> int:
         return _main_demo_v2(argv[1:])
     if argv and argv[0] == "demo-v3":
         return _main_demo_v3(argv[1:])
+    if argv and argv[0] == "demo-model-v1":
+        return _main_demo_model_v1(argv[1:])
+    if argv and argv[0] == "calibrate-model":
+        return _main_calibrate_model(argv[1:])
+    if argv and argv[0] == "calibrate-controls":
+        return _main_calibrate_controls(argv[1:])
 
     parser = argparse.ArgumentParser(description="Run one authorized Kimura assessment interaction")
     parser.add_argument("config", type=Path, help="local JSON assessment configuration")
@@ -141,6 +149,46 @@ def _main_demo_v3(argv: list[str]) -> int:
         print(run_demo_v3(persist_path=args.persist, report_path=args.report))
     except Exception:
         parser.error("agent security demo v3 could not be completed")
+    return 0
+
+
+def _main_demo_model_v1(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run the local Kimura Model-Backed Adapter v1")
+    parser.add_argument("--model", required=True, help="pinned local Ollama model identifier")
+    parser.add_argument("--trials", type=int, default=10, help="paired baseline and retest trial count")
+    parser.add_argument("--persist", type=Path, help="append safe evidence to a local JSONL file")
+    parser.add_argument("--report", type=Path, help="write the safe model-backed report")
+    args = parser.parse_args(argv)
+    try:
+        if args.report is not None and args.persist is None:
+            parser.error("--report requires --persist")
+        print(run_model_v1(model_id=args.model, trials=args.trials, persist_path=args.persist, report_path=args.report))
+    except Exception:
+        parser.error("model-backed demo could not be completed")
+    return 0
+
+
+def _main_calibrate_model(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run deterministic Model-Backed Adapter calibration fixtures")
+    parser.add_argument("--model", required=True, help="pinned local Ollama model identifier")
+    parser.add_argument("--trials", type=int, default=10, help="trial count per fixture")
+    args = parser.parse_args(argv)
+    try:
+        print(run_ollama_calibration(model_id=args.model, trials=args.trials))
+    except Exception:
+        parser.error("model calibration could not be completed")
+    return 0
+
+
+def _main_calibrate_controls(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Run benign model-pipeline positive and negative controls")
+    parser.add_argument("--model", required=True, help="pinned local Ollama model identifier")
+    parser.add_argument("--trials", type=int, default=5, help="trial count per control")
+    args = parser.parse_args(argv)
+    try:
+        print(run_ollama_controls(model_id=args.model, trials=args.trials))
+    except Exception:
+        parser.error("model controls could not be completed")
     return 0
 
 

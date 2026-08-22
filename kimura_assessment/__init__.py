@@ -17,6 +17,9 @@ from .evidence import EvidenceRecord, EvidenceStore, EvidenceValidationError, di
 from .findings import Finding, FindingValidationError
 from .risk import RiskEvaluator
 from .scenarios import AgentDemoContract, ScenarioFixture, DEMO_V3_SCENARIOS, EXFIL_CONTRACT, EXFIL_FIXTURE
+from .model_schemas import AgentTrialResult, ModelRequest, ModelResponse, ModelSettings, ProposedAction, TrialAggregate, TrialConfig
+from .model_scenarios import MODEL_V1_FIXTURE, ModelScenarioFixture
+from .calibration import CALIBRATION_FIXTURES, CalibrationFixtureResult, calibration_json, run_calibration_suite, run_ollama_calibration
 
 __all__ = [
     "AssessmentContract",
@@ -48,4 +51,18 @@ __all__ = [
     "FindingValidationError",
     "RiskEvaluator",
     "digest_text",
+    "AgentTrialResult",
+    "ModelRequest",
+    "ModelResponse",
+    "ModelSettings",
+    "ProposedAction",
+    "TrialAggregate",
+    "TrialConfig",
+    "MODEL_V1_FIXTURE",
+    "ModelScenarioFixture",
+    "CALIBRATION_FIXTURES",
+    "CalibrationFixtureResult",
+    "calibration_json",
+    "run_calibration_suite",
+    "run_ollama_calibration",
 ]

@@ -102,6 +102,14 @@ For the deterministic local Agent Security Assessment Demo v3, run:
 python3 -m kimura_assessment demo-v3
 ```
 
+For the local Model-Backed Adapter v1, first install and start Ollama separately with a pinned local model. Kimura accepts only a loopback Ollama endpoint, uses synthetic tools, and does not persist prompts or raw model responses:
+
+```console
+python3 -m kimura_assessment demo-model-v1 --model llama3.2:3b --trials 10
+```
+
+The command performs paired baseline and exact-fixture remediated trials. Replace the model identifier only with a locally installed, approved model; Kimura does not install or download it.
+
 Demo v3 assesses two independent authorized scenarios against one loopback agent: indirect prompt injection causing an unauthorized `send_email` action, and sensitive-data exfiltration through an `external_upload` boundary. Each finding is validated from safe audit metadata, remediated with an explicit policy, and retested with the exact original fixture. The consolidated report contains hashes, classifications, and evidence references only.
 
 Demo v2 exercises a deliberately vulnerable local agent, validates an
