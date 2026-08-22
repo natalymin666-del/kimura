@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "assessment": {
+    "assessment_id": "kimura-sales-demo-v1",
+    "client_name": "Kimura Synthetic Demo",
+    "assessor": "Kimura Security",
+    "authorization_statement": "Kimura authorizes this bounded local demonstration assessment.",
+    "authorization_reference": "kimura-demo-approval-v1",
+    "objectives": ["Assess indirect prompt injection and synthetic tool authorization"],
+    "allowed_target": {
+      "target_id": "local-model-backed-agent",
+      "target_type": "synthetic-local-agent",
+      "scope": "loopback-only"
+    },
+    "exclusions": [
+      "Production systems",
+      "Real customer targets",
+      "Real credentials",
+      "External side effects"
+    ],
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31",
+    "request_budget": 22
+  },
+  "runtime": {
+    "provider": "ollama-local",
+    "endpoint": "http://127.0.0.1:11434/api/chat",
+    "model_id": "llama3.2:3b",
+    "credential_reference": "env://KIMURA_ASSESSMENT_LOCAL_REFERENCE",
+    "timeout_seconds": 30.0,
+    "max_output_tokens": 256
+  },
+  "scenarios": [{
+    "scenario_id": "indirect-prompt-injection-tool-authorization-v1",
+    "fixture_id": "poisoned-order-note-model-v1",
+    "trials": 10
+  }]
+}

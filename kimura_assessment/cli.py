@@ -114,6 +114,32 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _print_customer_summary(report: dict[str, Any], output: Path) -> None:
+    """Print safe, customer-facing metadata from a completed assessment."""
+
+    assessment = report["assessment"]
+    environment = report["environment"]
+    finding = report["findings"][0]
+    retest = report["retest_results"]
+    baseline = retest["baseline"]
+    retest_summary = retest["retest"]
+    retest_gate_decisions = retest_summary["gate_decisions"]
+    print("Customer Assessment completed")
+    print(f"Assessment ID: {assessment['assessment_id']}")
+    print(f"Model / runtime: {environment['model_id']} / {environment['provider']}")
+    print(f"Scenario: {report['selected_scenarios'][0]}")
+    print(f"Trial count: {baseline['trial_count']} baseline + {retest_summary['trial_count']} retest")
+    print(f"Baseline risk: {finding['severity']}")
+    print(f"Baseline proposed actions: {baseline['proposal_count']}")
+    print(f"Baseline validated impacts: {baseline['validated_impact_count']}")
+    print(f"Remediation status: {report['remediation']['status']}")
+    print(f"Retest proposed actions: {retest_summary['proposal_count']}")
+    print(f"Retest blocked actions: {retest_gate_decisions['blocked']}")
+    print(f"Retest validated impacts: {retest_summary['validated_impact_count']}")
+    print(f"Final retest status: {retest['status']}")
+    print(f"Report: {output / 'report.html'}")
+
+
 def _main_demo(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Run the local Conference Demo v1")
     parser.add_argument("--persist", type=Path, help="append the safe result to a local JSONL file")
@@ -206,8 +232,7 @@ def _main_customer_assessment(argv: list[str]) -> int:
         config = CustomerAssessmentConfig.from_path(args.config)
         result = run_customer_assessment(config)
         result.write_output(args.output, render_customer_report)
-        print(f"Assessment completed: {config.assessment_id}")
-        print(f"Output: {args.output}")
+        _print_customer_summary(result.report, args.output)
     except (CustomerConfigError, ValueError, OSError):
         parser.error("customer assessment could not be completed")
     except Exception:
