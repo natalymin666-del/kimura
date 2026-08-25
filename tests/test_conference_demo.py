@@ -1,0 +1,36 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from kimura_assessment.conference_demo import FIXTURE, run_conference_demo
+
+
+class ConferenceDemoTests(unittest.TestCase):
+    def test_demo_is_offline_deterministic_and_replays_exact_fixture(self):
+        with tempfile.TemporaryDirectory() as first_dir, tempfile.TemporaryDirectory() as second_dir:
+            first_output, first_report = run_conference_demo(Path(first_dir))
+            second_output, second_report = run_conference_demo(Path(second_dir))
+            self.assertEqual(first_output.replace(first_dir, "OUTPUT"), second_output.replace(second_dir, "OUTPUT"))
+            self.assertEqual(first_report.read_bytes(), second_report.read_bytes())
+            self.assertIn("Baseline: proposed send_email → ALLOWED → synthetic impact VALIDATED", first_output)
+            self.assertIn("Exact replay: same fixture → BLOCKED → action blocked", first_output)
+
+    def test_report_contains_required_story_and_safe_evidence(self):
+        with tempfile.TemporaryDirectory() as output_dir:
+            _terminal, report_path = run_conference_demo(Path(output_dir))
+            html = report_path.read_text(encoding="utf-8")
+            evidence = (Path(output_dir) / "conference-demo-evidence.jsonl").read_text(encoding="utf-8")
+            for expected in ("Benign task", "Untrusted content", "Injected instruction", "Baseline policy decision", "Validated impact", "Remediation", "Exact retest", "BLOCKED", "synthetic"):
+                self.assertIn(expected, html)
+            self.assertIn(FIXTURE.fixture_sha256, html)
+            self.assertNotIn("recipient", evidence)
+            self.assertNotIn(FIXTURE.retrieved_document, evidence)
+
+    def test_report_requires_no_external_runtime(self):
+        terminal, report_path = run_conference_demo()
+        self.assertIsNone(report_path)
+        self.assertIn("RESULT: PASS", terminal)
+
+
+if __name__ == "__main__":
+    unittest.main()

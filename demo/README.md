@@ -5,6 +5,18 @@ workflow. It assesses one model-backed agent against one approved indirect
 prompt-injection/tool-authorization fixture, applies local policy remediation,
 and replays the exact fixture.
 
+For the fully offline primary conference demonstration, run:
+
+~~~console
+python3 -m kimura_assessment.conference_demo
+~~~
+
+It uses the existing deterministic assessment lifecycle in-process: benign
+task, poisoned retrieved document, synthetic unauthorized action, validated
+synthetic impact, remediation, exact replay, and blocked action. The report is
+written to `conference-demo-output/conference-demo-report.html`.
+
+
 ## Prerequisites
 
 - Python 3.10 or newer

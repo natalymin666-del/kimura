@@ -102,6 +102,19 @@ For the deterministic local Agent Security Assessment Demo v3, run:
 python3 -m kimura_assessment demo-v3
 ```
 
+For the primary fully offline Conference Demo v1, run:
+
+```console
+python3 -m kimura_assessment.conference_demo
+```
+
+This deterministic demo uses one local poisoned-document fixture, a synthetic
+`send_email` action, the existing action-gate and remediation policy, and an
+exact retest. It writes `conference-demo-output/conference-demo-report.html`
+and hash-only evidence. No Ollama runtime, network, credential, or external
+side effect is required.
+
+
 For the local Model-Backed Adapter v1, first install and start Ollama separately with a pinned local model. Kimura accepts only a loopback Ollama endpoint, uses synthetic tools, and does not persist prompts or raw model responses:
 
 ```console
