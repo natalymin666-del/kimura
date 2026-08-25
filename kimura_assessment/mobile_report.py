@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import base64
 from dataclasses import asdict, dataclass
 from html import escape
 from typing import Any, Mapping
 from urllib.parse import quote, urlsplit, urlunsplit
+
+import qrcode
+from qrcode.image.svg import SvgPathImage
 
 
 class MobileReportError(ValueError):
@@ -147,15 +151,35 @@ def derive_mobile_report(snapshot: Mapping[str, Any], *, expected_run_id: str | 
     )
 
 
-def build_mobile_report_url(base_url: str, run_id: str) -> str:
-    """Build the deterministic local URL payload used by QR handoff."""
+def build_mobile_report_url(base_url: str, run_id: str, *, allow_loopback: bool = True) -> str:
+    """Build the deterministic read-only URL for one exact assessment run."""
 
     parsed = urlsplit(base_url)
-    if parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.query or parsed.fragment:
-        raise ValueError("base_url must be a query-free localhost HTTP URL")
+    hostname = parsed.hostname
+    if parsed.scheme != "http" or not hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ValueError("base_url must be a query-free HTTP URL with an explicit host")
+    if hostname in {"0.0.0.0", "::", "[::]"}:
+        raise ValueError("base_url must not use a wildcard host")
+    if not allow_loopback and hostname in {"127.0.0.1", "localhost", "::1"}:
+        raise ValueError("QR handoff must use an explicit LAN host")
     if not run_id or "/" in run_id:
         raise ValueError("run_id is invalid")
     return urlunsplit((parsed.scheme, parsed.netloc, f"/report/{quote(run_id, safe='')}", "", ""))
+
+
+def build_qr_data_uri(mobile_report_url: str) -> str:
+    """Generate a fully offline SVG QR image for an explicit LAN report URL."""
+
+    parsed = urlsplit(mobile_report_url)
+    if parsed.scheme != "http" or parsed.hostname in {None, "127.0.0.1", "localhost", "::1", "0.0.0.0", "::", "[::]"}:
+        raise ValueError("QR payload must use an explicit LAN HTTP host")
+    if not parsed.path.startswith("/report/") or parsed.query or parsed.fragment:
+        raise ValueError("QR payload must point only to the read-only report route")
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=6, border=4, image_factory=SvgPathImage)
+    qr.add_data(mobile_report_url)
+    qr.make(fit=True)
+    svg = qr.make_image().to_string()
+    return "data:image/svg+xml;base64," + base64.b64encode(svg).decode("ascii")
 
 
 def _display(value: Any) -> str:

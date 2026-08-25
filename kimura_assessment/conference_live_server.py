@@ -126,18 +126,22 @@ class ProgressHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
 
-    def __init__(self, journal: ProgressJournal, host: str = "127.0.0.1", port: int = 0, *, page_html: str | None = None) -> None:
-        if host != "127.0.0.1":
-            raise ValueError("progress server must bind to 127.0.0.1")
+    def __init__(self, journal: ProgressJournal, host: str = "127.0.0.1", port: int = 0, *, page_html: str | None = None, public_host: str | None = None) -> None:
+        if not host or host in {"0.0.0.0", "::", "[::]"}:
+            raise ValueError("progress server requires an explicit non-wildcard bind host")
+        if public_host in {"0.0.0.0", "::", "[::]"}:
+            raise ValueError("public_host must not be a wildcard host")
         self.journal = journal
         self.page_html = page_html
         self.page_path = "/phase43e-live.html"
+        self.bind_host = host
+        self.public_host = public_host or host
         super().__init__((host, port), _ProgressRequestHandler)
         self._thread: Thread | None = None
 
     @property
     def base_url(self) -> str:
-        return f"http://127.0.0.1:{self.server_port}"
+        return f"http://{self.public_host}:{self.server_port}"
 
     def start(self) -> None:
         if self._thread is not None and self._thread.is_alive():

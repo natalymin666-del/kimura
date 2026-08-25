@@ -37,7 +37,7 @@ class ConferenceLiveBrowserTests(unittest.TestCase):
             self.skipTest("browser layout dependencies are not installed")
         with tempfile.TemporaryDirectory() as directory:
             html_path = Path(directory) / "live.html"
-            html_path.write_text(render_live_page_html("journal-run", api_base="http://api.invalid"), encoding="utf-8")
+            html_path.write_text(render_live_page_html("journal-run", api_base="http://api.invalid", mobile_report_url="http://192.168.50.10:8123/report/journal-run", qr_data_uri="data:image/svg+xml;base64,PHN2Zy8+"), encoding="utf-8")
             script = r'''
 const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
 (async () => {
@@ -116,7 +116,9 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
             self.assertLessEqual(heading["scrollWidth"], heading["clientWidth"])
             self.assertGreater(heading["rightGap"], 8)
         self.assertNotIn("MOBILE REPORT", output["states"]["started"]["text"])
+        self.assertEqual(output["states"]["started"]["images"], 0)
         self.assertIn("MOBILE REPORT", output["states"]["fix"]["text"])
+        self.assertEqual(output["states"]["fix"]["images"], 1)
         self.assertEqual(output["states"]["started"]["external"], 0)
         self.assertTrue(output["reduced"]["reveal"])
         self.assertIn(output["reduced"]["reducedDuration"], ("0.01ms", "1e-05s"))
