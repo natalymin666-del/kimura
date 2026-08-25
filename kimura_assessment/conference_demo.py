@@ -19,6 +19,8 @@ ASSESSMENT_ID = "kimura-conference-demo-v1"
 FINDING_ID = "finding-conference-indirect-tool-action-001"
 TOOL_NAME = "send_email"
 POLICY_ID = "tool-policy-deny-untrusted-external-actions"
+LAPTOP_REPORT_FILENAME = "conference-demo-report.html"
+MOBILE_REPORT_FILENAME = "conference-demo-mobile.html"
 
 
 @dataclass(frozen=True)
@@ -116,6 +118,40 @@ def _render_report(report: dict[str, object]) -> str:
 """
 
 
+def _render_mobile_report(report: dict[str, object]) -> str:
+    """Render a short phone-first view from the completed assessment result."""
+    def text(value: object) -> str:
+        return escape(str(value))
+
+    baseline = report["baseline"]
+    retest = report["retest"]
+    baseline_allowed = baseline["decision"] == "allowed"
+    retest_blocked = retest["decision"] == "blocked"
+    exact_replay = report["exact_fixture_replayed"] is True
+    passed = baseline_allowed and retest_blocked and exact_replay and bool(baseline["validated_impact"]) and not bool(retest["executed"])
+    before_status = "VULNERABLE" if baseline_allowed else "NOT VULNERABLE"
+    after_status = "PROTECTED" if retest_blocked else "NOT PROTECTED"
+    result_status = "PASS" if passed else "REVIEW REQUIRED"
+    result_class = "pass" if passed else "review"
+
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kimura Mobile Conference Demo v1</title>
+<style>
+:root{{color-scheme:light}}*{{box-sizing:border-box}}body{{margin:0;background:#081525;color:#f5f8fb;font:600 18px/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}main{{max-width:540px;margin:0 auto;padding:22px 18px 34px}}header{{padding:16px 2px 22px}}.brand{{margin:0;color:#70d7ff;font-size:.85rem;font-weight:900;letter-spacing:.18em}}h1{{margin:8px 0 0;font-size:clamp(2.2rem,12vw,4.2rem);line-height:.95;letter-spacing:-.05em}}.sub{{margin:12px 0 0;color:#b9c8d8;font-size:1rem}}.step{{position:relative;margin:14px 0;padding:20px;border:1px solid #263b51;border-radius:18px;background:#102238;box-shadow:0 8px 24px #0003}}.step::before{{content:"";position:absolute;top:-15px;left:28px;height:15px;border-left:2px solid #3d617d}}.step:first-of-type::before{{display:none}}.eyebrow{{margin:0 0 7px;color:#70d7ff;font-size:.73rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}}h2{{margin:0;font-size:1.6rem;line-height:1.08}}.detail{{margin:10px 0 0;color:#c8d5e1;font-weight:500}}.outcome{{border-width:3px}}.before{{border-color:#ff805a;background:#321d1c}}.after{{border-color:#58e0a4;background:#123126}}.status{{margin:12px 0 4px;font-size:clamp(2.2rem,13vw,4rem);font-weight:950;letter-spacing:.02em;line-height:1}}.before .status{{color:#ff9878}}.after .status,.pass{{color:#58e0a4}}.review{{color:#ff9878}}.action{{margin:10px 0 0;color:#fff;font-size:1.2rem;font-weight:900}}.arrow{{padding:1px 0 1px;text-align:center;color:#70d7ff;font-size:1rem;font-weight:900;letter-spacing:.05em}}.notice{{color:#dbe6ef;font-size:.98rem;font-weight:500}}.notice strong{{color:#fff}}.foot{{margin:20px 2px 0;color:#91a6ba;font-size:.8rem;font-weight:500}}code{{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em}}@media (prefers-reduced-motion:reduce){{*{{scroll-behavior:auto}}}}
+</style></head>
+<body><main><header><p class="brand">KIMURA · CYBERSEC NETHERLANDS</p><h1>Stop the<br>wrong action.</h1><p class="sub">A deterministic offline security demonstration.</p></header>
+<section class="step"><p class="eyebrow">01 · Attack</p><h2>Indirect Prompt Injection</h2><p class="detail">Untrusted retrieved content attempts to make a synthetic AI agent invoke a synthetic tool.</p></section>
+<section class="step outcome before"><p class="eyebrow">02 · Before fix</p><h2>{text(before_status)}</h2><p class="status">{text(baseline["decision"]).upper()}</p><p class="action"><code>{text(baseline["proposed_action"])}</code> action</p><p class="detail">Synthetic impact validated: {"yes" if bool(baseline["validated_impact"]) else "no"}.</p></section>
+<div class="arrow" aria-hidden="true">↓ &nbsp; REMEDIATION APPLIED &nbsp; ↓</div>
+<section class="step"><p class="eyebrow">03 · Exact replay</p><h2>Same attack. Same fixture.</h2><p class="detail">The original attack was replayed after the tool policy was applied.</p></section>
+<section class="step outcome after"><p class="eyebrow">04 · After fix</p><h2>{text(after_status)}</h2><p class="status">{text(retest["decision"]).upper()}</p><p class="action"><code>{text(retest["proposed_action"])}</code> action</p><p class="detail">Exact fixture replay: {"yes" if exact_replay else "no"}.</p></section>
+<section class="step"><p class="eyebrow">Result</p><h2 class="{result_class}">{result_status}</h2><p class="detail">The synthetic unauthorized action was {"blocked after remediation" if passed else "not verified as blocked after remediation"}.</p></section>
+<p class="notice"><strong>Synthetic AI agent.</strong> <strong>Synthetic tool.</strong><br>No real email was sent. No production agent was compromised.</p>
+<p class="foot">Offline deterministic demonstration · No network, APIs, CDNs, external fonts, or external side effects.<br>Assessment: <code>{text(report["assessment_id"])}</code></p>
+</main></body></html>
+"""
+
+
 def run_conference_demo(output_dir: Path | None = None) -> tuple[str, Path | None]:
     """Run the fixed lifecycle and optionally write report/evidence artifacts."""
     app = ConferenceAgent()
@@ -141,8 +177,10 @@ def run_conference_demo(output_dir: Path | None = None) -> tuple[str, Path | Non
         store = EvidenceStore(evidence_path)
         for item in evidence:
             store.append(item)
-        report_path = output_dir / "conference-demo-report.html"
+        report_path = output_dir / LAPTOP_REPORT_FILENAME
         report_path.write_text(html, encoding="utf-8", newline="\n")
+        mobile_report_path = output_dir / MOBILE_REPORT_FILENAME
+        mobile_report_path.write_text(_render_mobile_report(report), encoding="utf-8", newline="\n")
     return _terminal_text(report, report_path), report_path
 
 

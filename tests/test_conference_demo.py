@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kimura_assessment.conference_demo import FIXTURE, run_conference_demo
+from kimura_assessment.conference_demo import FIXTURE, MOBILE_REPORT_FILENAME, run_conference_demo
 
 
 class ConferenceDemoTests(unittest.TestCase):
@@ -51,6 +51,32 @@ class ConferenceDemoTests(unittest.TestCase):
         terminal, report_path = run_conference_demo()
         self.assertIsNone(report_path)
         self.assertIn("RESULT: PASS", terminal)
+
+
+    def test_mobile_report_uses_the_same_runtime_outcomes(self):
+        with tempfile.TemporaryDirectory() as output_dir:
+            _terminal, laptop_report = run_conference_demo(Path(output_dir))
+            mobile_report = Path(output_dir) / MOBILE_REPORT_FILENAME
+            self.assertTrue(laptop_report.exists())
+            self.assertTrue(mobile_report.exists())
+
+            laptop_html = laptop_report.read_text(encoding="utf-8")
+            mobile_html = mobile_report.read_text(encoding="utf-8")
+            mobile_upper = mobile_html.upper()
+            self.assertIn("BEFORE FIX", mobile_upper)
+            self.assertIn("VULNERABLE", mobile_upper)
+            self.assertIn("ALLOWED", mobile_upper)
+            self.assertIn("EXACT REPLAY", mobile_upper)
+            self.assertIn("PROTECTED", mobile_upper)
+            self.assertIn("BLOCKED", mobile_upper)
+            self.assertIn("PASS", mobile_upper)
+            self.assertIn(FIXTURE.fixture_sha256, laptop_html)
+            self.assertIn("Synthetic AI agent", mobile_html)
+            self.assertIn("Synthetic tool", mobile_html)
+            self.assertIn("No real email was sent", mobile_html)
+            self.assertIn("No production agent was compromised", mobile_html)
+            self.assertNotIn("https://", mobile_html)
+            self.assertNotIn("http://", mobile_html)
 
 
 if __name__ == "__main__":
