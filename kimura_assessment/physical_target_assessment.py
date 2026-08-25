@@ -17,6 +17,7 @@ from .physical_target_protocol import (
     validate_response,
 )
 from .physical_target_runtime import PhysicalTargetRuntime, TargetConfig, fixture_for
+from .progress_events import ProgressEmitter, ProgressEventType, ProgressSink
 
 
 MAX_RESPONSE_BYTES = 64 * 1024
@@ -152,20 +153,28 @@ class PhysicalTargetOrchestrator:
         expected_hashes: Mapping[str, str],
         observed_hashes: Mapping[str, str],
         cleanup: Callable[[], None] | None = None,
+        progress_sink: ProgressSink | None = None,
+        run_id: str | None = None,
     ) -> None:
         self.client = client
         self.expected_target_id = expected_target_id
         self.expected_hashes = dict(expected_hashes)
         self.observed_hashes = dict(observed_hashes)
         self.cleanup = cleanup or (lambda: None)
+        self.progress_sink = progress_sink
+        self.progress_run_id = run_id
 
     def run(self) -> PhysicalAssessmentResult:
         values: dict[str, Any] = {"code_hashes": dict(self.observed_hashes)}
         evidence: list[dict[str, Any]] = []
+        progress = ProgressEmitter(self.progress_sink, run_id=self.progress_run_id)
+        progress.emit(ProgressEventType.ASSESSMENT_STARTED, {"assessment_id": "physical-assessment-v1"})
         reached = False
         cleanup_attempted = False
         cleanup_completed = False
         failure: str | None = None
+        failure_code: str | None = None
+        fix_invariants_proven = False
         try:
             hashes_ok, hashes = verify_code_hashes(self.expected_hashes, self.observed_hashes)
             values.update({"code_hashes": hashes, "code_hashes_verified": hashes_ok})
@@ -192,6 +201,12 @@ class PhysicalTargetOrchestrator:
                 "baseline_fixture_sha256": fixture.fixture_sha256,
             })
             evidence.append({"stage": "discovery", "target_id": discovery["target_id"], "policy_sha256": discovery.get("policy_sha256")})
+            progress.emit(ProgressEventType.TARGET_VERIFIED, {
+                "target_id": discovery["target_id"],
+                "target_kind": discovery["target_kind"],
+                "protocol_version": discovery["protocol_version"],
+                "policy_digest_before": discovery.get("policy_sha256"),
+            })
 
             baseline_request = self._execute_request("physical-assessment-baseline-01", fixture, discovery["policy_id"], discovery["target_id"])
             baseline = self._call(baseline_request)
@@ -222,6 +237,14 @@ class PhysicalTargetOrchestrator:
             if baseline_validation.get("validated") is not True or baseline_validation.get("synthetic_event_id") != baseline["synthetic_event_id"]:
                 raise PhysicalAssessmentError("baseline synthetic impact validation failed")
             evidence.append({"stage": "baseline-impact-validated", "event_id": baseline_validation["synthetic_event_id"], "ledger_count": baseline_validation["ledger_sequence"]})
+            progress.emit(ProgressEventType.BASELINE_VALIDATED, {
+                "fixture_id": baseline["fixture_id"],
+                "fixture_sha256": baseline["fixture_sha256"],
+                "action": baseline["action"],
+                "decision": baseline["authorization_decision"],
+                "event_id": baseline_validation["synthetic_event_id"],
+                "ledger_count": baseline_validation["ledger_sequence"],
+            })
 
             remediation = self._call({
                 "protocol_version": 1,
@@ -240,6 +263,12 @@ class PhysicalTargetOrchestrator:
                 "deny_only_verified": True,
             })
             evidence.append({"stage": "deny-only-remediation", "policy_id": remediation["policy_id"], "policy_sha256_before": discovery["policy_sha256"], "policy_sha256_after": remediation["policy_sha256"], "denied_actions": remediation["denied_actions"]})
+            progress.emit(ProgressEventType.REMEDIATION_VERIFIED, {
+                "policy_id": remediation["policy_id"],
+                "policy_digest_before": discovery["policy_sha256"],
+                "policy_digest_after": remediation["policy_sha256"],
+                "denied_actions": list(remediation["denied_actions"]),
+            })
 
             replay_request = self._execute_request("physical-assessment-replay-01", fixture, remediation["policy_id"], discovery["target_id"])
             replay = self._call(replay_request)
@@ -247,6 +276,12 @@ class PhysicalTargetOrchestrator:
             exact = all(replay.get(key) == baseline.get(key) for key in ("fixture_sha256", "action", "attack_id", "fixture_id"))
             if not exact:
                 raise PhysicalAssessmentError("exact replay fixture identity mismatch")
+            progress.emit(ProgressEventType.REPLAY_IDENTITY_VERIFIED, {
+                "attack_id": replay["attack_id"],
+                "fixture_id": replay["fixture_id"],
+                "fixture_sha256": replay["fixture_sha256"],
+                "action": replay["action"],
+            })
             if replay.get("authorization_decision") != "blocked" or replay.get("executed") is not False or replay.get("synthetic_event_id") is not None or replay.get("ledger_sequence") != baseline["ledger_sequence"]:
                 raise PhysicalAssessmentError("replay blocking or ledger invariant failed")
             values.update({
@@ -276,9 +311,18 @@ class PhysicalTargetOrchestrator:
             if replay_validation.get("validated") is not False or replay_validation.get("synthetic_event_id") is not None or replay_validation.get("ledger_sequence") != baseline["ledger_sequence"]:
                 raise PhysicalAssessmentError("replay no-impact validation invariant failed")
             evidence.append({"stage": "replay-no-impact-confirmed", "validated": False, "ledger_count": replay_validation["ledger_sequence"]})
+            progress.emit(ProgressEventType.REPLAY_VALIDATED, {
+                "decision": replay["authorization_decision"],
+                "executed": replay["executed"],
+                "synthetic_event_id": None,
+                "ledger_count": replay_validation["ledger_sequence"],
+                "baseline_ledger_count": baseline["ledger_sequence"],
+            })
+            fix_invariants_proven = True
             status = "PASS"
         except (PhysicalAssessmentError, KeyError, TypeError) as exc:
             failure = str(exc)
+            failure_code = type(exc).__name__
             status = "PARTIAL" if reached else "FAILED"
         finally:
             cleanup_attempted = True
@@ -287,7 +331,44 @@ class PhysicalTargetOrchestrator:
                 cleanup_completed = True
             except Exception as exc:  # cleanup failure must never become a pass
                 failure = f"{failure}; cleanup failed: {type(exc).__name__}" if failure else f"cleanup failed: {type(exc).__name__}"
+                failure_code = "cleanup_failed"
                 status = "PARTIAL" if reached else "FAILED"
+                progress.emit(ProgressEventType.CLEANUP_FAILED, {"failure_code": type(exc).__name__})
+            else:
+                progress.emit(ProgressEventType.CLEANUP_COMPLETED, {"cleanup_attempted": True})
+            if (
+                status == "PASS"
+                and fix_invariants_proven
+                and cleanup_completed
+                and values.get("physical_target_reached") is True
+                and values.get("baseline_decision") == "allowed"
+                and values.get("baseline_synthetic_impact_confirmed") is True
+                and bool(values.get("baseline_event_id"))
+                and values.get("baseline_ledger_count") == 1
+                and values.get("deny_only_verified") is True
+                and values.get("exact_replay_identity_verified") is True
+                and values.get("replay_target_reached") is True
+                and values.get("replay_decision") == "blocked"
+                and values.get("replay_executed") is False
+                and values.get("replay_synthetic_impact_confirmed") is False
+                and values.get("final_ledger_count") == 1
+            ):
+                progress.emit(ProgressEventType.FIX_VERIFIED, {
+                    "baseline_ledger_count": values["baseline_ledger_count"],
+                    "final_ledger_count": values["final_ledger_count"],
+                })
+            elif status == "PARTIAL":
+                progress.emit(ProgressEventType.ASSESSMENT_PARTIAL, {
+                    "failure_code": failure_code or "assessment_incomplete",
+                    "last_proven_event": progress.last_event_type.value if progress.last_event_type else None,
+                    "cleanup_completed": cleanup_completed,
+                })
+            else:
+                progress.emit(ProgressEventType.ASSESSMENT_FAILED, {
+                    "failure_code": failure_code or "assessment_failed",
+                    "last_proven_event": progress.last_event_type.value if progress.last_event_type else None,
+                    "cleanup_completed": cleanup_completed,
+                })
         return PhysicalAssessmentResult(status=status, **values, evidence_chain=tuple(evidence), cleanup_attempted=cleanup_attempted, cleanup_completed=cleanup_completed, failure_reason=failure)
 
     def _call(self, payload: Mapping[str, Any]) -> dict[str, Any]:
