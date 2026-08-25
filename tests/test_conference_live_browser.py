@@ -115,6 +115,8 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
             self.assertEqual(heading["text"], "PHYSICAL\nTARGET")
             self.assertLessEqual(heading["scrollWidth"], heading["clientWidth"])
             self.assertGreater(heading["rightGap"], 8)
+        self.assertNotIn("MOBILE REPORT", output["states"]["started"]["text"])
+        self.assertIn("MOBILE REPORT", output["states"]["fix"]["text"])
         self.assertEqual(output["states"]["started"]["external"], 0)
         self.assertTrue(output["reduced"]["reveal"])
         self.assertIn(output["reduced"]["reducedDuration"], ("0.01ms", "1e-05s"))

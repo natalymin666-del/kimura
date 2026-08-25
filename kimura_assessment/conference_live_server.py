@@ -10,6 +10,7 @@ from threading import Thread
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlsplit
 
+from .mobile_report import MobileReportError, derive_mobile_report, render_mobile_report_html
 from .progress_journal import ProgressJournal
 
 
@@ -52,6 +53,26 @@ class _ProgressRequestHandler(BaseHTTPRequestHandler):
             self._send_html(self.server.page_html)
             return
         parts = parsed.path.split("/")
+        if len(parts) == 3 and parts[1] == "report":
+            if parsed.query:
+                self._error(HTTPStatus.BAD_REQUEST, "unexpected_query")
+                return
+            run_id = unquote(parts[2])
+            if not _RUN_ID.fullmatch(run_id):
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_run_id")
+                return
+            snapshot = self.server.journal.get_latest_snapshot(run_id)
+            if snapshot is None:
+                self._error(HTTPStatus.NOT_FOUND, "unknown_run")
+                return
+            try:
+                report = derive_mobile_report(snapshot.to_dict(), expected_run_id=run_id)
+            except MobileReportError as exc:
+                code = "not_terminal" if "terminal" in str(exc) else "invalid_report"
+                self._error(HTTPStatus.CONFLICT if code == "not_terminal" else HTTPStatus.INTERNAL_SERVER_ERROR, code)
+                return
+            self._send_html(render_mobile_report_html(report))
+            return
         if len(parts) != 5 or parts[1:3] != ["api", "assessments"]:
             self._error(HTTPStatus.NOT_FOUND, "not_found")
             return
