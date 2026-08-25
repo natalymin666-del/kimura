@@ -46,7 +46,7 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
   await page.addInitScript(() => { window.__KIMURA_LIVE_TEST_MODE = true; });
   await page.goto("file://" + process.env.KIMURA_HTML_PATH);
   const snapshots = JSON.parse(process.env.KIMURA_SNAPSHOTS);
-  const read = () => page.evaluate(() => ({state: window.KimuraLive.getState(), text: document.body.innerText, images: document.images.length}));
+  const read = () => page.evaluate(() => { const root = document.querySelector(".shell"); const decision = document.querySelector(".before .decision"); const styles = decision ? getComputedStyle(decision) : null; const targetCard = document.querySelector(".target-card"); const targetHeading = document.querySelector(".target-card h1"); const targetStyles = targetCard ? getComputedStyle(targetCard) : null; const targetHeadingRect = targetHeading ? targetHeading.getBoundingClientRect() : null; const targetCardRect = targetCard ? targetCard.getBoundingClientRect() : null; return {state: window.KimuraLive.getState(), text: document.body.innerText, images: document.images.length, targetHeading: targetHeading && targetHeadingRect && targetCardRect && targetStyles ? {text: targetHeading.textContent, clientWidth: targetHeading.clientWidth, scrollWidth: targetHeading.scrollWidth, rightGap: targetCardRect.right - targetHeadingRect.right, paddingRight: parseFloat(targetStyles.paddingRight)} : null, reveal: root.classList.contains("state-reveal"), presentation: window.KimuraLive.getPresentation(), decision: decision ? {whiteSpace: styles.whiteSpace, wordBreak: styles.wordBreak, text: decision.textContent, clientWidth: decision.clientWidth, scrollWidth: decision.scrollWidth} : null, animation: document.querySelector(".story-active") ? getComputedStyle(document.querySelector(".story-active")).animationName : "none", reducedDuration: document.querySelector(".story-active") ? getComputedStyle(document.querySelector(".story-active")).animationDuration : "none", external: document.querySelectorAll("img,script[src],link[rel=stylesheet]").length}; });
   const states = {};
   for (const name of ["started","target","baseline","remediation","identity","replay","cleanup","fix","assessment_partial","assessment_failed"]) {
     await page.reload();
@@ -58,9 +58,16 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
   const baselineEvent = snapshots.remediation.evidence.remediation_verified;
   const remediationEvent = {run_id:"journal-run",sequence:4,event_type:"remediation_verified",payload:baselineEvent};
   const firstApply = await page.evaluate(event => window.KimuraLive.applyEvent(event), remediationEvent);
+  const presentationAfterFirst = await page.evaluate(() => window.KimuraLive.getPresentation());
   const duplicateApply = await page.evaluate(event => window.KimuraLive.applyEvent(event), remediationEvent);
   const staleApply = await page.evaluate(event => window.KimuraLive.applyEvent({...event, sequence: 1}), remediationEvent);
   const afterDuplicate = await read();
+  await page.emulateMedia({reducedMotion: "reduce"});
+  await page.reload();
+  await page.evaluate(snapshot => window.KimuraLive.applySnapshot(snapshot), snapshots.started);
+  const reducedTargetEvent = {run_id:"journal-run",sequence:2,event_type:"target_verified",payload:snapshots.target.evidence.target_verified};
+  await page.evaluate(event => window.KimuraLive.applyEvent(event), reducedTargetEvent);
+  const reduced = await read();
   await page.reload();
   await page.evaluate(snapshot => window.KimuraLive.applySnapshot(snapshot), snapshots.started);
   await page.evaluate(() => {
@@ -85,7 +92,7 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
   const escaped = {...snapshots.target, evidence: {...snapshots.target.evidence, target_verified: {...snapshots.target.evidence.target_verified, target_id: "<img src=x onerror=alert(1)>"}}};
   await page.evaluate(snapshot => window.KimuraLive.applySnapshot(snapshot), escaped);
   const escapedView = await read();
-  console.log(JSON.stringify({states,firstApply,duplicateApply,staleApply,afterDuplicate,reconciled,disconnected,unknown,malformed,escapedView}));
+  console.log(JSON.stringify({states,firstApply,duplicateApply,staleApply,presentationAfterFirst,afterDuplicate,reduced,reconciled,disconnected,unknown,malformed,escapedView}));
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });
 '''
@@ -95,6 +102,22 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
                 raise AssertionError(completed.stderr)
         output = json.loads(completed.stdout.strip().splitlines()[-1])
         self.assertEqual(output["states"]["fix"]["state"]["state"], "fix_verified")
+        self.assertFalse(output["states"]["started"]["reveal"])
+        self.assertFalse(output["states"]["fix"]["reveal"])
+        self.assertFalse(output["states"]["assessment_partial"]["reveal"])
+        self.assertFalse(output["states"]["assessment_failed"]["reveal"])
+        self.assertEqual(output["states"]["started"]["decision"]["text"], "NOT ESTABLISHED")
+        self.assertEqual(output["states"]["started"]["decision"]["whiteSpace"], "nowrap")
+        self.assertEqual(output["states"]["started"]["decision"]["wordBreak"], "normal")
+        self.assertLessEqual(output["states"]["started"]["decision"]["scrollWidth"], output["states"]["started"]["decision"]["clientWidth"])
+        for name in ("started", "fix"):
+            heading = output["states"][name]["targetHeading"]
+            self.assertEqual(heading["text"], "PHYSICAL\nTARGET")
+            self.assertLessEqual(heading["scrollWidth"], heading["clientWidth"])
+            self.assertGreater(heading["rightGap"], 8)
+        self.assertEqual(output["states"]["started"]["external"], 0)
+        self.assertTrue(output["reduced"]["reveal"])
+        self.assertIn(output["reduced"]["reducedDuration"], ("0.01ms", "1e-05s"))
         self.assertIn("FIX VERIFIED", output["states"]["fix"]["text"])
         for name in ("assessment_partial", "assessment_failed"):
             self.assertNotIn("FIX VERIFIED", output["states"][name]["text"])
@@ -105,6 +128,7 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
         self.assertIn("BLOCKED", output["states"]["replay"]["text"])
         self.assertNotIn("FIX VERIFIED", output["states"]["replay"]["text"])
         self.assertEqual(output["afterDuplicate"]["state"]["sequence"], 4)
+        self.assertEqual(output["afterDuplicate"]["presentation"], output["presentationAfterFirst"])
         self.assertTrue(output["firstApply"])
         self.assertFalse(output["duplicateApply"])
         self.assertFalse(output["staleApply"])

@@ -25,6 +25,15 @@ def _json_bytes(value: dict[str, Any]) -> bytes:
 class _ProgressRequestHandler(BaseHTTPRequestHandler):
     server: "ProgressHTTPServer"
 
+    def _send_html(self, body: str) -> None:
+        encoded = body.encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.send_header("Cache-Control", _CACHE_CONTROL)
+        self.end_headers()
+        self.wfile.write(encoded)
+
     def _send_json(self, status: HTTPStatus, body: dict[str, Any]) -> None:
         encoded = _json_bytes(body)
         self.send_response(status)
@@ -39,6 +48,9 @@ class _ProgressRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 - required HTTP handler name
         parsed = urlsplit(self.path)
+        if parsed.path == self.server.page_path and not parsed.query and self.server.page_html is not None:
+            self._send_html(self.server.page_html)
+            return
         parts = parsed.path.split("/")
         if len(parts) != 5 or parts[1:3] != ["api", "assessments"]:
             self._error(HTTPStatus.NOT_FOUND, "not_found")
@@ -93,10 +105,12 @@ class ProgressHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
 
-    def __init__(self, journal: ProgressJournal, host: str = "127.0.0.1", port: int = 0) -> None:
+    def __init__(self, journal: ProgressJournal, host: str = "127.0.0.1", port: int = 0, *, page_html: str | None = None) -> None:
         if host != "127.0.0.1":
             raise ValueError("progress server must bind to 127.0.0.1")
         self.journal = journal
+        self.page_html = page_html
+        self.page_path = "/phase43e-live.html"
         super().__init__((host, port), _ProgressRequestHandler)
         self._thread: Thread | None = None
 

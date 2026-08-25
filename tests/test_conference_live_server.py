@@ -5,6 +5,7 @@ from urllib.request import Request, urlopen
 import unittest
 
 from kimura_assessment.conference_live_server import ProgressHTTPServer
+from kimura_assessment.conference_live import render_live_page_html
 from kimura_assessment.progress_events import ProgressEvent, ProgressEventType
 from kimura_assessment.progress_journal import ProgressJournal
 from tests.test_progress_journal import pass_events
@@ -41,6 +42,22 @@ class ConferenceLiveServerTests(unittest.TestCase):
         self.assertEqual(body["sequence"], 8)
         self.assertTrue(body["terminal"])
         self.assertEqual(headers["Cache-Control"], "no-store")
+
+    def test_optional_live_page_is_served_by_same_origin_server(self):
+        page = ProgressHTTPServer(self.journal, page_html=render_live_page_html("journal-run"))
+        page.start()
+        try:
+            request = Request(page.base_url + "/phase43e-live.html")
+            with urlopen(request, timeout=2) as response:
+                status = response.status
+                headers = dict(response.headers)
+                body = response.read().decode("utf-8")
+        finally:
+            page.stop()
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+        self.assertIn("KIMURA", body)
+        self.assertIn("window.KimuraLive", body)
 
     def test_partial_and_failed_snapshots_remain_truthful(self):
         for run_id, terminal_type in (("partial-run", ProgressEventType.ASSESSMENT_PARTIAL), ("failed-run", ProgressEventType.ASSESSMENT_FAILED)):
