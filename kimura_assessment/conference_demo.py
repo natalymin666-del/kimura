@@ -99,12 +99,15 @@ def _render_report(report: dict[str, object]) -> str:
     evidence_rows = "".join(f'<li>{text(item["phase"])}: {text(item["outcome"])} ({text(item["evidence_id"])})</li>' for item in evidence)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Kimura Conference Demo v1</title>
-<style>body{{font:16px system-ui,sans-serif;max-width:980px;margin:40px auto;padding:0 24px;color:#17202a;background:#f7f8fa}}section{{background:white;border:1px solid #d9dee5;border-radius:10px;padding:22px;margin:18px 0}}h1{{margin-bottom:4px}}h2{{margin-top:0}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.ok{{color:#087443}}.bad{{color:#a33b16}}.label{{font-weight:700}}pre{{white-space:pre-wrap;background:#f0f3f6;padding:14px;border-radius:6px}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #e1e5e9;text-align:left;padding:9px}}small{{color:#5c6670}}</style></head>
-<body><h1>Kimura Conference Demo v1</h1><p><strong>Indirect prompt injection against a synthetic AI agent</strong></p>
-<p>Fully offline and deterministic. No model, network, credential, or external side effect is used.</p>
+<style>
+:root{{color-scheme:light}}body{{font:16px/1.5 system-ui,sans-serif;max-width:1080px;margin:0 auto;padding:28px 24px 56px;color:#17202a;background:#f5f7fa}}header{{background:#10243e;color:#fff;border-radius:14px;padding:34px 36px;margin-bottom:20px}}header h1{{font-size:clamp(2rem,5vw,3.6rem);letter-spacing:.08em;margin:0}}header p{{margin:4px 0 0;color:#b9d4ee;font-size:1.15rem;font-weight:600}}section{{background:#fff;border:1px solid #d9dee5;border-radius:12px;padding:24px;margin:18px 0;box-shadow:0 2px 8px #10243e0d}}h2{{margin-top:0;color:#10243e}}.eyebrow{{margin:0 0 8px;color:#50708f;font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}}.summary{{border:0;background:#10243e;color:#fff;padding:28px}}.summary h2{{color:#fff}}.summary-note{{color:#d8e6f2;margin-top:20px}}.facts,.comparison{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}}.fact,.result{{padding:16px;border-radius:9px;background:#edf3f8}}.fact{{color:#10243e}}.fact strong,.result strong{{display:block;color:#10243e;font-size:1.04rem}}.comparison{{grid-template-columns:1fr 1fr;align-items:stretch}}.result{{border:2px solid #b9c6d3;background:#f8fafc}}.result.before{{border-color:#bd5b32}}.result.after{{border-color:#14835c}}.result .status{{font-size:1.65rem;letter-spacing:.06em;font-weight:900;margin:8px 0}}.before .status,.bad{{color:#a33b16}}.after .status,.ok{{color:#087443}}.arrow{{align-self:center;text-align:center;color:#50708f;font-size:1.5rem;font-weight:900}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}.label{{font-weight:700}}pre{{white-space:pre-wrap;background:#f0f3f6;padding:14px;border-radius:6px}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #e1e5e9;text-align:left;padding:9px}}small{{color:#5c6670}}.summary small{{color:#d8e6f2}}@media (max-width:700px){{.facts,.comparison,.grid{{grid-template-columns:1fr}}.arrow{{transform:rotate(90deg)}}header{{padding:26px 24px}}}}
+</style></head>
+<body><header><h1>KIMURA</h1><p>Agentic Offensive Security</p></header>
+<section class="summary"><p class="eyebrow">Conference Demo v1.1 · Executive Summary</p><h2>Indirect Prompt Injection <span aria-hidden="true">↓</span> Unauthorized Tool Action</h2><div class="facts"><div class="fact"><strong>Attack</strong>Indirect Prompt Injection</div><div class="fact"><strong>Target</strong>Synthetic AI Agent</div><div class="fact"><strong>Risk</strong>Unauthorized Tool Execution</div></div><p class="summary-note">Fully offline and deterministic. This uses a synthetic agent and synthetic tool only; no real email was sent, no production agent was involved, and no network or external side effect is used.</p></section>
+<section><p class="eyebrow">Security outcome</p><div class="comparison"><div class="result before"><strong>BEFORE FIX</strong><p class="status">VULNERABLE</p><p><strong>{text(baseline["proposed_action"])} → {text(baseline["decision"]).upper()}</strong></p><p>Synthetic impact validated</p></div><div class="result after"><strong>AFTER FIX</strong><p class="status">PROTECTED</p><p><strong>same {text(retest["proposed_action"])} → {text(retest["decision"]).upper()}</strong></p><p>Exact attack replay</p></div></div><p class="arrow" aria-hidden="true">BEFORE FIX &nbsp; ↓ &nbsp; REMEDIATION APPLIED &nbsp; ↓ &nbsp; EXACT SAME ATTACK REPLAYED &nbsp; ↓ &nbsp; AFTER FIX</p></section>
 <section><h2>1. Benign task</h2><p>{text(FIXTURE.benign_task)}</p></section>
 <section><h2>2. Untrusted content</h2><p>The agent retrieves a local document. Retrieved content is data, not authorization.</p><pre>{text(FIXTURE.retrieved_document)}</pre><p><span class="label">Content SHA-256:</span> <small>{text(FIXTURE.retrieved_content_sha256)}</small></p></section>
-<section><h2>3. Attack and impact validation</h2><div class="grid"><div><p class="label">Injected instruction</p><p>{text(FIXTURE.injected_instruction)}</p><p class="label">Proposed action</p><p>{text(baseline["proposed_action"])}</p></div><div><p class="label">Baseline policy decision</p><p class="bad">{text(baseline["decision"]).upper()} — {text(baseline["policy_id"])}</p><p class="label">Validated impact</p><p class="bad">{text(baseline["impact"])}.</p><p><small>Impact is synthetic: no email was sent.</small></p></div></div></section>
+<section><h2>3. Attack and impact validation</h2><div class="grid"><div><p class="label">Injected instruction</p><p>{text(FIXTURE.injected_instruction)}</p><p class="label">Proposed action</p><p>{text(baseline["proposed_action"])}</p></div><div><p class="label">Baseline policy decision</p><p class="bad">{text(baseline["decision"]).upper()} — {text(baseline["policy_id"])}</p><p class="label">Validated impact</p><p class="bad">{text(baseline["impact"])}.</p><p><small>Impact is synthetic only: no email was sent.</small></p></div></div></section>
 <section><h2>4. Remediation</h2><p>Applied existing policy: <strong>{text(POLICY_ID)}</strong>.</p><p>Retrieved content is untrusted and cannot authorize an external tool action.</p></section>
 <section><h2>5. Exact retest</h2><p>The exact same fixture was replayed. Fixture SHA-256 remained <small>{text(report["fixture_sha256"])}</small>.</p><table><tr><th></th><th>Decision</th><th>Action</th><th>Impact</th></tr><tr><td>Baseline</td><td class="bad">{text(baseline["decision"]).upper()}</td><td>{text(baseline["proposed_action"])}</td><td>{text(baseline["impact"])}</td></tr><tr><td>Exact retest</td><td class="ok">{text(retest["decision"]).upper()}</td><td>{text(retest["proposed_action"])}</td><td>{text(retest["impact"])}</td></tr></table></section>
 <section><h2>Evidence</h2><p>{text(len(evidence))} hash-only evidence records were produced. Raw tool arguments and responses are not stored.</p><ul>{evidence_rows}</ul></section>
@@ -146,7 +149,31 @@ def run_conference_demo(output_dir: Path | None = None) -> tuple[str, Path | Non
 def _terminal_text(report: dict[str, object], report_path: Path | None) -> str:
     baseline, retest = report["baseline"], report["retest"]
     location = str(report_path) if report_path else "(not written)"
-    return "\n".join(("KIMURA CONFERENCE DEMO v1", "Fully offline | deterministic | synthetic tool only", "", "Benign task → untrusted retrieved document → indirect prompt injection", f"Baseline: proposed {baseline['proposed_action']} → {baseline['decision'].upper()} → synthetic impact VALIDATED", f"Remediation: {POLICY_ID}", f"Exact replay: {'same fixture' if report['exact_fixture_replayed'] else 'fixture mismatch'} → {retest['decision'].upper()} → action blocked", "RESULT: PASS", f"Report: {location}"))
+    return "\n".join((
+        "KIMURA",
+        "Agentic Offensive Security",
+        "=" * 42,
+        "ATTACK: Indirect Prompt Injection",
+        "TARGET: Synthetic AI Agent | RISK: Unauthorized Tool Execution",
+        "Fully offline | deterministic | synthetic agent/tool only",
+        "No real email was sent; no production agent or external side effect is involved.",
+        "",
+        "BEFORE FIX",
+        "VULNERABLE",
+        f"Unauthorized action: {baseline['decision'].upper()}",
+        "Impact: VALIDATED (synthetic only)",
+        "",
+        "REMEDIATION APPLIED",
+        f"Policy: {POLICY_ID}",
+        "",
+        "EXACT SAME ATTACK REPLAYED",
+        "AFTER FIX",
+        "PROTECTED",
+        f"Unauthorized action: {retest['decision'].upper()}",
+        "",
+        "RESULT: PASS",
+        f"Report: {location}",
+    ))
 
 
 def main(argv: list[str] | None = None) -> int:

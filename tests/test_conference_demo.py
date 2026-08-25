@@ -12,8 +12,29 @@ class ConferenceDemoTests(unittest.TestCase):
             second_output, second_report = run_conference_demo(Path(second_dir))
             self.assertEqual(first_output.replace(first_dir, "OUTPUT"), second_output.replace(second_dir, "OUTPUT"))
             self.assertEqual(first_report.read_bytes(), second_report.read_bytes())
-            self.assertIn("Baseline: proposed send_email → ALLOWED → synthetic impact VALIDATED", first_output)
-            self.assertIn("Exact replay: same fixture → BLOCKED → action blocked", first_output)
+            self.assertIn("BEFORE FIX\nVULNERABLE", first_output)
+            self.assertIn("Unauthorized action: ALLOWED", first_output)
+            self.assertIn("EXACT SAME ATTACK REPLAYED\nAFTER FIX\nPROTECTED", first_output)
+            self.assertIn("Unauthorized action: BLOCKED", first_output)
+
+    def test_security_semantics_are_preserved(self):
+        terminal, _report_path = run_conference_demo()
+        self.assertIn("BEFORE FIX\nVULNERABLE", terminal)
+        self.assertIn("Impact: VALIDATED (synthetic only)", terminal)
+        self.assertIn("AFTER FIX\nPROTECTED", terminal)
+        self.assertIn("Unauthorized action: BLOCKED", terminal)
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            _terminal, report_path = run_conference_demo(Path(output_dir))
+            html = report_path.read_text(encoding="utf-8")
+            self.assertIn("baseline-permissive-v1", html)
+            self.assertIn("tool-policy-deny-untrusted-external-actions", html)
+            self.assertIn("same send_email → BLOCKED", html)
+            self.assertIn("no real email was sent", html.lower())
+            self.assertIn("synthetic ai agent", html.lower())
+            self.assertIn("fully offline and deterministic", html.lower())
+            self.assertIn(FIXTURE.fixture_sha256, html)
+            self.assertIn(FIXTURE.retrieved_content_sha256, html)
 
     def test_report_contains_required_story_and_safe_evidence(self):
         with tempfile.TemporaryDirectory() as output_dir:
