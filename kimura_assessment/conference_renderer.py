@@ -33,6 +33,8 @@ def render_conference_html(result: Mapping[str, Any]) -> str:
 
     if result.get("phase") == "physical_identity_checkpoint":
         return render_physical_identity_checkpoint_html(result)
+    if result.get("phase") == "physical_baseline_checkpoint":
+        return render_physical_baseline_checkpoint_html(result)
     vm = derive_view_model(result)
     action = _value(vm.action)
     status_label = _value(vm.display_status)
@@ -173,3 +175,21 @@ def render_physical_identity_checkpoint_html(result: Mapping[str, Any]) -> str:
     identity = "IDENTITY VERIFIED" if verified else "IDENTITY NOT VERIFIED"
     esc = lambda value: _value(value)
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kimura · Physical Target Discovery</title><style>body{{margin:0;background:#070a0f;color:#f4f7fb;font:16px system-ui;padding:clamp(24px,6vw,80px)}}main{{max-width:900px;margin:auto;border:1px solid #263140;border-radius:18px;padding:32px;background:#101722}}h1{{font-size:clamp(38px,8vw,82px);line-height:.9}}.label{{color:#69d7e8;letter-spacing:.12em;font-weight:800}}.ok{{color:#73e0a2}}.bad{{color:#ff7c86}}dl{{display:grid;grid-template-columns:220px 1fr;gap:12px}}dt{{color:#8d99aa}}dd{{margin:0;overflow-wrap:anywhere}}@media(max-width:600px){{dl{{grid-template-columns:1fr}}}}</style></head><body><main><div class="label">PHYSICAL TARGET</div><h1>Raspberry Pi 5</h1><h2>{esc(status)}</h2><h2>{esc(identity)}</h2><dl><dt>Target IPv4</dt><dd>{esc(result.get("target_ip"))}</dd><dt>SSH identity/user</dt><dd>{esc(result.get("ssh_user"))}</dd><dt>Observed hostname</dt><dd>{esc(result.get("observed_hostname"))}</dd><dt>Observed architecture</dt><dd>{esc(result.get("observed_architecture"))}</dd><dt>Observed model</dt><dd>{esc(result.get("observed_model"))}</dd><dt>Discovery timestamp</dt><dd>{esc(result.get("discovery_timestamp"))}</dd><dt>Discovery result</dt><dd>{esc(result.get("discovery_result"))}</dd><dt>Failure reason</dt><dd>{esc(result.get("failure_reason"))}</dd></dl><p>Read-only discovery checkpoint. Baseline attack not started.</p></main></body></html>'''
+
+
+def render_physical_baseline_checkpoint_html(result: Mapping[str, Any]) -> str:
+    """Render the baseline checkpoint without later lifecycle states."""
+    evidence = result.get("baseline_evidence") if isinstance(result.get("baseline_evidence"), Mapping) else {}
+    allowed = result.get("baseline_decision") == "ALLOWED" and result.get("baseline_synthetic_impact_confirmed") is True
+    def value(item):
+        return _value(item)
+    status = "ALLOWED" if allowed else "BASELINE NOT VERIFIED"
+    impact = "SYNTHETIC IMPACT CONFIRMED" if allowed else "SYNTHETIC IMPACT NOT CONFIRMED"
+    return ("<!doctype html><html><head><meta charset=\"utf-8\"><title>Kimura Physical Baseline</title></head><body>"
+            "<main><h1>PHYSICAL TARGET</h1><h2>Raspberry Pi 5</h2><h2>CONNECTED</h2><h2>IDENTITY VERIFIED</h2>"
+            "<h2>BASELINE ATTACK</h2><h3>" + value(result.get("baseline_action")) + "</h3><h3>" + value(status) + "</h3><p>" + value(impact) + "</p>"
+            "<dl><dt>Target IPv4</dt><dd>" + value(result.get("target_ip")) + "</dd><dt>Fixture path</dt><dd>" + value(evidence.get("fixture_path")) + "</dd>"
+            "<dt>Pre event count</dt><dd>" + value(evidence.get("pre_event_count")) + "</dd><dt>Post event count</dt><dd>" + value(evidence.get("post_event_count")) + "</dd>"
+            "<dt>Event ID</dt><dd>" + value(evidence.get("event_id")) + "</dd><dt>External destination</dt><dd>" + value(evidence.get("external_destination")) + "</dd>"
+            "<dt>External network action</dt><dd>" + value(evidence.get("external_network_action")) + "</dd></dl>"
+            "<p>Baseline evidence checkpoint. Remediation and replay not started.</p></main></body></html>")
