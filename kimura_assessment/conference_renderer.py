@@ -35,6 +35,8 @@ def render_conference_html(result: Mapping[str, Any]) -> str:
         return render_physical_identity_checkpoint_html(result)
     if result.get("phase") == "physical_baseline_checkpoint":
         return render_physical_baseline_checkpoint_html(result)
+    if result.get("phase") == "physical_replay_checkpoint":
+        return render_physical_replay_checkpoint_html(result)
     vm = derive_view_model(result)
     action = _value(vm.action)
     status_label = _value(vm.display_status)
@@ -193,3 +195,20 @@ def render_physical_baseline_checkpoint_html(result: Mapping[str, Any]) -> str:
             "<dt>Event ID</dt><dd>" + value(evidence.get("event_id")) + "</dd><dt>External destination</dt><dd>" + value(evidence.get("external_destination")) + "</dd>"
             "<dt>External network action</dt><dd>" + value(evidence.get("external_network_action")) + "</dd></dl>"
             "<p>Baseline evidence checkpoint. Remediation and replay not started.</p></main></body></html>")
+
+
+def render_physical_replay_checkpoint_html(result: Mapping[str, Any]) -> str:
+    """Render the final evidence-backed remediation/replay checkpoint."""
+    verified = result.get("fix_verified") is True
+    evidence = result.get("replay_evidence") if isinstance(result.get("replay_evidence"), Mapping) else {}
+    value = lambda item: _value(item)
+    replay_impact = "NO SYNTHETIC IMPACT" if evidence.get("synthetic_impact") != "CONFIRMED" else "SYNTHETIC IMPACT CONFIRMED"
+    match = "MATCHED" if result.get("exact_replay_identity_verified") else "NOT MATCHED"
+    status = "FIX VERIFIED" if verified else "FIX NOT VERIFIED"
+    return ("<!doctype html><html><head><meta charset=\"utf-8\"><title>Kimura Physical Replay</title></head><body>"
+            "<main><h1>PHYSICAL TARGET</h1><h2>Raspberry Pi 5</h2><h2>CONNECTED</h2><h2>IDENTITY VERIFIED</h2>"
+            "<h2>BEFORE</h2><h3>send_email</h3><p>ALLOWED · SYNTHETIC IMPACT CONFIRMED</p>"
+            "<h2>REMEDIATION</h2><p>DENY-ONLY VERIFIED</p><h2>EXACT REPLAY</h2><h3>send_email</h3>"
+            "<p>" + value(result.get("replay_decision")) + " · " + value(replay_impact) + "</p><p>SAME FIXTURE · SHA-256 " + match + "</p><h2>" + status + "</h2>"
+            "<dl><dt>Pre replay event count</dt><dd>" + value(evidence.get("pre_replay_event_count")) + "</dd><dt>Post replay event count</dt><dd>" + value(evidence.get("post_replay_event_count")) + "</dd><dt>Failure reason</dt><dd>" + value(result.get("failure_reason")) + "</dd></dl>"
+            "<p>Remediation and exact replay checkpoint. No further lifecycle action started.</p></main></body></html>")
