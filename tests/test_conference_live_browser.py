@@ -107,7 +107,7 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
         self.assertFalse(output["states"]["assessment_partial"]["reveal"])
         self.assertFalse(output["states"]["assessment_failed"]["reveal"])
         self.assertEqual(output["states"]["started"]["decision"]["text"], "NOT ESTABLISHED")
-        self.assertEqual(output["states"]["started"]["decision"]["whiteSpace"], "nowrap")
+        self.assertEqual(output["states"]["started"]["decision"]["whiteSpace"], "normal")
         self.assertEqual(output["states"]["started"]["decision"]["wordBreak"], "normal")
         self.assertLessEqual(output["states"]["started"]["decision"]["scrollWidth"], output["states"]["started"]["decision"]["clientWidth"])
         for name in ("started", "fix"):
@@ -148,3 +148,34 @@ const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConferenceLiveTypographyBrowserTests(unittest.TestCase):
+    def test_not_established_is_contained_in_both_cards_at_all_viewports(self):
+        node = Path(os.environ.get("KIMURA_NODE", "/home/nataly/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node"))
+        playwright_root = Path(os.environ.get("KIMURA_PLAYWRIGHT_ROOT", "/home/nataly/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"))
+        chromium = Path(os.environ.get("KIMURA_CHROMIUM", "/opt/BurpSuiteCommunity/burpbrowser/142.0.7444.134/chrome"))
+        if not node.exists() or not playwright_root.exists() or not chromium.exists():
+            self.skipTest("browser layout dependencies are not installed")
+        with tempfile.TemporaryDirectory() as directory:
+            html_path = Path(directory) / "live.html"
+            html_path.write_text(render_live_page_html("viewport-run", api_base="http://api.invalid"), encoding="utf-8")
+            script = r"""
+const { chromium } = require(process.env.KIMURA_PLAYWRIGHT_ROOT);
+(async () => { const browser = await chromium.launch({headless:true, executablePath:process.env.KIMURA_CHROMIUM, args:["--no-sandbox"]}); const page = await browser.newPage(); await page.addInitScript(() => { window.__KIMURA_LIVE_TEST_MODE = true; }); const out = {}; for (const [width,height] of [[2560,1440],[1920,1080],[1600,900],[1440,900],[1200,900],[1024,900],[700,900],[390,844]]) { await page.setViewportSize({width,height}); await page.goto("file://" + process.env.KIMURA_HTML_PATH); await page.addStyleTag({content:".long-status{font-family:Arial,sans-serif!important;font-weight:1000!important;letter-spacing:.2em!important}"}); out[width+"x"+height] = await page.evaluate(() => ["before","after"].map(name => { const card=document.querySelector("."+name+".transform-card"), decision=card.querySelector(".decision"), cardRect=card.getBoundingClientRect(), textRect=decision.getBoundingClientRect(), style=getComputedStyle(card); return {text:decision.textContent, right:textRect.right, left:textRect.left, leftGap:textRect.left-cardRect.left, contentLeft:cardRect.left+parseFloat(style.paddingLeft), innerRight:cardRect.right-parseFloat(style.paddingRight), rightGap:cardRect.right-textRect.right, fontSize:getComputedStyle(decision).fontSize, letterSpacing:getComputedStyle(decision).letterSpacing, maxInlineSize:getComputedStyle(decision).maxInlineSize, minInlineSize:getComputedStyle(decision).minInlineSize, whiteSpace:getComputedStyle(decision).whiteSpace, scrollWidth:decision.scrollWidth, clientWidth:decision.clientWidth}; })); } console.log(JSON.stringify(out)); await browser.close(); })().catch(error => { console.error(error); process.exit(1); });
+"""
+            environment = {**os.environ, "KIMURA_PLAYWRIGHT_ROOT": str(playwright_root), "KIMURA_CHROMIUM": str(chromium), "KIMURA_HTML_PATH": str(html_path)}
+            completed = subprocess.run([str(node), "-e", script], capture_output=True, text=True, check=False, timeout=45, env=environment)
+            if completed.returncode:
+                raise AssertionError(completed.stderr)
+        output = json.loads(completed.stdout.strip().splitlines()[-1])
+        for viewport, cards in output.items():
+            for card in cards:
+                self.assertEqual(card["text"], "NOT ESTABLISHED", viewport)
+                self.assertLessEqual(card["right"], card["innerRight"] - 32 + 0.5, viewport)
+                self.assertGreaterEqual(card["left"], card["contentLeft"] - 0.5, viewport)
+                self.assertEqual(card["maxInlineSize"], "100%", viewport)
+                self.assertEqual(card["minInlineSize"], "0px", viewport)
+                self.assertGreater(card["rightGap"], 0, viewport)
+                self.assertGreaterEqual(card["leftGap"], 0, viewport)
+                self.assertLessEqual(card["scrollWidth"], card["clientWidth"], viewport)
