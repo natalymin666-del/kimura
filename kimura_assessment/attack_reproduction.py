@@ -373,6 +373,162 @@ def build_scenario_three_variant_set(scenario: ScenarioDefinition) -> AttackVari
     return AttackVariantSet(SCENARIO_THREE_VARIANT_SET_ID, 1, scenario, variants)
 
 
+@dataclass(frozen=True, slots=True)
+class ReplayEvidenceCapsule:
+    experiment_id: str
+    variant_set_id: str
+    variant_set_version: int
+    variant_set_fingerprint: str
+    variant_id: str
+    variant_content_hash: str
+    scenario_id: str
+    scenario_version: int
+    scenario_fingerprint: str
+    provider: str
+    model: str
+    run_id: str
+    response_id: str
+    tool_call_id: str
+    capability_id: str
+    capability_schema_fingerprint: str
+    canonical_arguments: Mapping[str, Any]
+    canonical_arguments_sha256: str
+    canonical_request_fingerprint: str
+    fixture_identity: str
+    security_context_fingerprint: str
+    authorization_decision: str
+    authorization_policy_fingerprint: str
+    tool_execution_result: Mapping[str, Any]
+    effect_ledger_before: int
+    effect_ledger_after: int
+    exact_effect_count: int
+    effect_fingerprint: str
+    causal_provenance_evidence: Mapping[str, Any]
+    attempt_journal_terminal_state: str
+    replay_capsule_sha256: str | None = None
+
+    def __post_init__(self) -> None:
+        required = (self.experiment_id, self.variant_set_id, self.variant_set_fingerprint, self.variant_id, self.variant_content_hash, self.scenario_id, self.scenario_fingerprint, self.provider, self.model, self.run_id, self.response_id, self.tool_call_id, self.capability_id, self.capability_schema_fingerprint, self.canonical_arguments_sha256, self.canonical_request_fingerprint, self.fixture_identity, self.security_context_fingerprint, self.authorization_policy_fingerprint, self.effect_fingerprint)
+        if not all(isinstance(value, str) and value for value in required):
+            raise ValueError("replay capsule identity is incomplete")
+        if self.variant_set_version < 1 or self.scenario_version < 1:
+            raise ValueError("replay capsule version is invalid")
+        if self.authorization_decision != "PERMIT" or self.effect_ledger_before != 0 or self.effect_ledger_after != 1 or self.exact_effect_count != 1:
+            raise ValueError("replay capsule baseline invariants are invalid")
+        if self.attempt_journal_terminal_state != "CLASSIFIED":
+            raise ValueError("replay capsule terminal state is invalid")
+        if not isinstance(self.canonical_arguments, Mapping) or not isinstance(self.tool_execution_result, Mapping) or not isinstance(self.causal_provenance_evidence, Mapping):
+            raise ValueError("replay capsule evidence is malformed")
+        if self.canonical_arguments_sha256 != _sha256(_canonical(dict(self.canonical_arguments))):
+            raise ValueError("canonical argument fingerprint mismatch")
+        for mapping in (self.canonical_arguments, self.tool_execution_result, self.causal_provenance_evidence):
+            if any(key in {"thinking", "raw_thinking", "raw_prose", "api_key", "authorization_header"} for key in mapping):
+                raise ValueError("unsafe provider content in replay capsule")
+        safe_values = _canonical(self._unsigned_dict()).lower()
+        if "api_key=" in safe_values or "authorization: bearer " in safe_values:
+            raise ValueError("unsafe provider content in replay capsule")
+        if self.tool_execution_result.get("executed") is not True or self.causal_provenance_evidence.get("confirmed") is not True:
+            raise ValueError("replay capsule execution/provenance is incomplete")
+        canonical = _canonical(self._unsigned_dict())
+        expected = _sha256(canonical)
+        if self.replay_capsule_sha256 is not None and self.replay_capsule_sha256 != expected:
+            raise ValueError("replay capsule fingerprint mismatch")
+
+    def _unsigned_dict(self) -> dict[str, Any]:
+        return {
+            "experiment_id": self.experiment_id, "variant_set_id": self.variant_set_id, "variant_set_version": self.variant_set_version,
+            "variant_set_fingerprint": self.variant_set_fingerprint, "variant_id": self.variant_id, "variant_content_hash": self.variant_content_hash,
+            "scenario_id": self.scenario_id, "scenario_version": self.scenario_version, "scenario_fingerprint": self.scenario_fingerprint,
+            "provider": self.provider, "model": self.model, "run_id": self.run_id, "response_id": self.response_id, "tool_call_id": self.tool_call_id,
+            "capability_id": self.capability_id, "capability_schema_fingerprint": self.capability_schema_fingerprint,
+            "canonical_arguments": dict(self.canonical_arguments), "canonical_arguments_sha256": self.canonical_arguments_sha256,
+            "canonical_request_fingerprint": self.canonical_request_fingerprint, "fixture_identity": self.fixture_identity,
+            "security_context_fingerprint": self.security_context_fingerprint, "authorization_decision": self.authorization_decision,
+            "authorization_policy_fingerprint": self.authorization_policy_fingerprint, "tool_execution_result": dict(self.tool_execution_result),
+            "effect_ledger_before": self.effect_ledger_before, "effect_ledger_after": self.effect_ledger_after,
+            "exact_effect_count": self.exact_effect_count, "effect_fingerprint": self.effect_fingerprint,
+            "causal_provenance_evidence": dict(self.causal_provenance_evidence), "attempt_journal_terminal_state": self.attempt_journal_terminal_state,
+        }
+
+    @property
+    def capsule_id(self) -> str:
+        return self.replay_capsule_sha256 or _sha256(_canonical(self._unsigned_dict()))
+
+    def to_dict(self) -> dict[str, Any]:
+        result = self._unsigned_dict()
+        result["replay_capsule_sha256"] = self.capsule_id
+        return result
+
+    def verify(self) -> None:
+        if self.capsule_id != _sha256(_canonical(self._unsigned_dict())):
+            raise ValueError("replay capsule fingerprint mismatch")
+
+    def validate_binding(self, *, variant_set: AttackVariantSet, scenario: ScenarioDefinition, experiment_id: str, run_id: str, fixture_id: str, capability: str) -> None:
+        variant = variant_set.resolve(self.variant_id)
+        if (
+            self.experiment_id != experiment_id
+            or self.variant_set_id != variant_set.variant_set_id
+            or self.variant_set_version != variant_set.variant_set_version
+            or self.variant_set_fingerprint != _sha256(_canonical({
+                "variant_set_id": variant_set.variant_set_id,
+                "variant_set_version": variant_set.variant_set_version,
+                "scenario": scenario.evidence_binding(),
+                "scenario_fingerprint": scenario.fingerprint,
+                "variants": [item.to_dict() for item in variant_set.variants],
+            }))
+            or self.variant_content_hash != variant.content_sha256
+            or self.scenario_id != scenario.scenario_id
+            or self.scenario_version != scenario.scenario_version
+            or self.scenario_fingerprint != scenario.fingerprint
+            or self.run_id != run_id
+            or self.fixture_identity != fixture_id
+            or self.capability_id != capability
+        ):
+            raise ValueError("replay capsule binding mismatch")
+
+    def matches_attempt(self, attempt: AttackAttemptEvidence) -> bool:
+        return (
+            self.experiment_id == attempt.experiment_id
+            and self.variant_set_fingerprint == attempt.variant_set_fingerprint
+            and self.variant_id == attempt.variant_id
+            and self.variant_content_hash == attempt.variant_content_sha256
+            and attempt.outcome == "DANGEROUS_INTENT_REPRODUCED"
+        )
+
+
+class ReplayEvidenceCapsuleStore:
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+
+    def write(self, capsule: ReplayEvidenceCapsule) -> None:
+        capsule.verify()
+        existing = self.read_all()
+        previous = existing.get(capsule.capsule_id)
+        if previous is not None and previous != capsule.to_dict():
+            raise ValueError("replay capsule mutation detected")
+        if previous is not None:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(_canonical(capsule.to_dict()) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    def read_all(self) -> dict[str, dict[str, Any]]:
+        if not self.path.exists():
+            return {}
+        result = {}
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            item = json.loads(line)
+            if not isinstance(item, dict) or not isinstance(item.get("replay_capsule_sha256"), str):
+                raise ValueError("replay capsule record is malformed")
+            key = item["replay_capsule_sha256"]
+            if key in result and result[key] != item:
+                raise ValueError("replay capsule mutation detected")
+            result[key] = item
+        return result
+
+
 JOURNAL_STATES = ("ALLOCATED", "REQUEST_STARTING", "REQUEST_SENT", "RESPONSE_RECEIVED", "NORMALIZED", "CLASSIFIED")
 
 
@@ -487,12 +643,14 @@ def recover_experiment(journal: AttemptJournal, *, experiment_id: str, variant_s
 
 
 class DurableAttackExperimentRunner:
-    def __init__(self, *, experiment: AttackReproductionExperiment, journal: AttemptJournal, clock: Callable[[], str]):
+    def __init__(self, *, experiment: AttackReproductionExperiment, journal: AttemptJournal, clock: Callable[[], str], capsule_store: ReplayEvidenceCapsuleStore | None = None, capsule_factory: Callable[[AttackAttemptEvidence], ReplayEvidenceCapsule] | None = None):
         if experiment.experiment_id in journal.experiment_ids():
             raise ValueError("experiment id already exists")
         self.experiment = experiment
         self.journal = journal
         self.clock = clock
+        self.capsule_store = capsule_store
+        self.capsule_factory = capsule_factory
         self._started: set[str] = set()
         self._attempt_ordinals: dict[str, int] = {}
 
@@ -532,6 +690,27 @@ class DurableAttackExperimentRunner:
             return None
         self.journal.append(self._event(variant, "RESPONSE_RECEIVED"))
         self.journal.append(self._event(variant, "NORMALIZED"))
+        if evidence.outcome == "DANGEROUS_INTENT_REPRODUCED":
+            if self.capsule_store is None or self.capsule_factory is None:
+                self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", "missing_replay_capsule"))
+                return None
+            try:
+                capsule = self.capsule_factory(evidence)
+                capsule.validate_binding(
+                    variant_set=self.experiment.variant_set.variant_set,
+                    scenario=self.experiment.scenario,
+                    experiment_id=self.experiment.experiment_id,
+                    run_id=self.experiment.run_id,
+                    fixture_id=self.experiment.fixture_id,
+                    capability=variant.protected_capability,
+                )
+                if not capsule.matches_attempt(evidence):
+                    raise ValueError("capsule attempt binding mismatch")
+                capsule.verify()
+                self.capsule_store.write(capsule)
+            except Exception:
+                self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", "capsule_persistence_failed"))
+                return None
         self.journal.append(self._event(variant, "CLASSIFIED", evidence.outcome))
         return evidence
 
