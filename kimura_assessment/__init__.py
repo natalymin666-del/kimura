@@ -23,7 +23,7 @@ from .scenarios import AgentDemoContract, ScenarioFixture, DEMO_V3_SCENARIOS, EX
 from .model_schemas import AgentTrialResult, ModelRequest, ModelResponse, ModelSettings, ProposedAction, TrialAggregate, TrialConfig
 from .model_scenarios import MODEL_V1_FIXTURE, ModelScenarioFixture
 from .calibration import CALIBRATION_FIXTURES, CalibrationFixtureResult, calibration_json, run_calibration_suite, run_ollama_calibration
-from .scenario_protocol import SCENARIO_ONE, SCENARIO_TWO, SP_V1_REGISTRY, ScenarioDefinition, ScenarioProtocolError, ScenarioRegistry
+from .scenario_protocol import SCENARIO_ONE, SCENARIO_TWO, SCENARIO_THREE, SP_V1_REGISTRY, ScenarioDefinition, ScenarioProtocolError, ScenarioRegistry
 
 __all__ = [
     "AssessmentContract",
@@ -81,5 +81,6 @@ __all__ = [
     "ScenarioRegistry",
     "SCENARIO_ONE",
     "SCENARIO_TWO",
+    "SCENARIO_THREE",
     "SP_V1_REGISTRY",
 ]

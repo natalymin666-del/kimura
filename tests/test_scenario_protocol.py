@@ -4,8 +4,10 @@ import unittest
 from kimura_assessment.scenario_protocol import (
     SCENARIO_ONE,
     SCENARIO_TWO,
+    SCENARIO_THREE,
     SP_V1_REGISTRY,
     SYNTHETIC_CANARY_FINGERPRINT_V1,
+    SYNTHETIC_INJECTION_CONTENT_SHA256_V1,
     ScenarioDefinition,
     ScenarioProtocolError,
     ScenarioRegistry,
@@ -47,6 +49,38 @@ class ScenarioTwoAdapter:
         self.calls.append("replay")
         return self._value({"run_id": run_id, "fixture_id": self.replay_fixture, "fixture_sha256": "d" * 64, "action": "read_protected_data", "sha256": self.replay_sha, "attack_id": "data-replay-1", "decision": self.replay_decision, "synthetic_impact": self.replay_canary, "ledger_before": 1, "ledger_after": 1, "executed": True, "scenario_facts": {"data_boundary_action": "read_protected_data", "synthetic_canary_fingerprint": SYNTHETIC_CANARY_FINGERPRINT_V1 if self.replay_canary else "none", "replay_data_access": self.replay_decision.upper(), "replay_canary_observed": self.replay_canary}})
 
+
+class ScenarioThreeAdapter:
+    def __init__(self, mode="success"):
+        self.mode = mode
+        self.binding = SCENARIO_THREE.evidence_binding()
+        self.content_sha = SYNTHETIC_INJECTION_CONTENT_SHA256_V1
+
+    def _value(self, value, *, bind=True):
+        value = dict(value)
+        if bind:
+            value.update(self.binding)
+        return value
+
+    def discover(self, run_id):
+        return self._value({"run_id": run_id, "identity_verified": True, "target_id": "synthetic-injection-target", "target_kind": "owned-synthetic-content-fixture", "protocol_version": 1, "policy_digest_before": "1" * 64})
+
+    def baseline(self, run_id):
+        facts = {"content_provenance": "UNTRUSTED", "content_fingerprint": self.content_sha, "guarded_capability": "write_guarded_record", "baseline_capability_result": "ALLOWED", "baseline_guarded_effect": self.mode not in {"no-effect", "wrong-content", "no-causal-provenance", "missing-provenance"}, "causal_provenance": self.mode not in {"no-effect", "wrong-content", "no-causal-provenance", "missing-provenance"}}
+        if self.mode == "wrong-content": facts["content_fingerprint"] = "0" * 64
+        if self.mode in {"no-causal-provenance", "missing-provenance"}: facts["causal_provenance"] = False
+        return self._value({"run_id": run_id, "fixture_id": "injection-fixture-3", "fixture_sha256": "d" * 64, "action": "write_guarded_record", "decision": "allowed", "synthetic_impact": facts["baseline_guarded_effect"], "event_id": "injection-effect-1", "ledger_before": 0, "ledger_after": 1, "sha256": self.content_sha, "scenario_facts": facts})
+
+    def remediate(self, run_id):
+        return self._value({"run_id": run_id, "verified": self.mode != "missing-remediation", "policy_id": "injection-provenance-policy-v1", "policy_digest_before": "1" * 64, "policy_digest_after": "2" * 64, "policy_before": "permit", "policy_after": "deny"})
+
+    def replay(self, run_id):
+        action = "different_capability" if self.mode == "different-capability" else "write_guarded_record"
+        replay_sha = "x" * 64 if self.mode in {"modified-content", "different-arguments"} else self.content_sha
+        binding = self.binding
+        if self.mode == "other-scenario":
+            binding = SCENARIO_ONE.evidence_binding()
+        return self._value({"run_id": "other-run" if self.mode == "other-run-effect" else run_id, "fixture_id": "wrong-fixture" if self.mode == "wrong-fixture" else "injection-fixture-3", "fixture_sha256": "d" * 64, "action": action, "sha256": replay_sha, "attack_id": "injection-replay-1", "decision": "allowed" if self.mode in {"replay-allowed", "trusted-replay"} else "blocked", "synthetic_impact": self.mode == "replay-effect", "ledger_before": 1, "ledger_after": 2 if self.mode == "replay-effect" else 1, "executed": True, "scenario_facts": {"content_provenance": "TRUSTED" if self.mode == "trusted-replay" else "UNTRUSTED", "content_fingerprint": self.content_sha, "guarded_capability": action, "replay_capability_result": "ALLOWED" if self.mode == "replay-allowed" else "BLOCKED", "second_guarded_effect": self.mode == "replay-effect"}}, bind=self.mode != "other-scenario")
 
 class ScenarioProtocolTests(unittest.TestCase):
     def test_scenario_one_represents_golden_send_email_without_loss(self):
@@ -144,6 +178,39 @@ class ScenarioProtocolTests(unittest.TestCase):
             result = PhysicalConferenceOrchestrator(run_id, adapter=adapter, emit=emitter.emit, scenario=SCENARIO_TWO).start()
             self.assertFalse(result.fix_verified)
             self.assertNotIn("fix_verified", journal.get_latest_snapshot(run_id).evidence)
+
+    def test_scenario_three_contract_and_generic_golden_lifecycle(self):
+        from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator
+        from kimura_assessment.progress_events import ProgressEmitter
+        run_id = "scenario-three-run"
+        journal = ProgressJournal()
+        emitter = ProgressEmitter(journal.append, run_id=run_id)
+        result = PhysicalConferenceOrchestrator(run_id, adapter=ScenarioThreeAdapter(), emit=emitter.emit, scenario_id=SCENARIO_THREE.scenario_id, scenario_version=1).start()
+        self.assertTrue(result.fix_verified)
+        report = __import__("kimura_assessment.mobile_report", fromlist=["derive_mobile_report"]).derive_mobile_report(journal.get_latest_snapshot(run_id).to_dict(), expected_run_id=run_id)
+        self.assertTrue(report.fix_verified)
+        self.assertEqual(report.scenario_facts["content_provenance"], "UNTRUSTED")
+        self.assertEqual(report.scenario_facts["guarded_capability"], "write_guarded_record")
+        self.assertNotIn("KIMURA_SYNTHETIC", str(report.to_dict()))
+
+    def test_scenario_three_negative_proofs_fail_closed(self):
+        from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator
+        from kimura_assessment.progress_events import ProgressEmitter
+        modes = ("no-effect", "wrong-content", "no-causal-provenance", "missing-provenance", "missing-remediation", "trusted-replay", "modified-content", "different-capability", "different-arguments", "wrong-fixture", "other-run-effect", "replay-allowed", "replay-effect", "other-scenario")
+        for mode in modes:
+            run_id = "scenario-three-negative-" + mode
+            journal = ProgressJournal()
+            emitter = ProgressEmitter(journal.append, run_id=run_id)
+            result = PhysicalConferenceOrchestrator(run_id, adapter=ScenarioThreeAdapter(mode), emit=emitter.emit, scenario=SCENARIO_THREE).start()
+            self.assertFalse(result.fix_verified, mode)
+            self.assertNotIn("fix_verified", journal.get_latest_snapshot(run_id).evidence, mode)
+
+    def test_scenario_three_safety_rejects_external_or_real_components(self):
+        for key in ("synthetic_content_only", "synthetic_capability_only", "external_llm", "real_tools"):
+            definition = SCENARIO_THREE.to_dict()
+            definition["safety_contract"][key] = False if key.startswith("synthetic") else True
+            with self.assertRaises(ScenarioProtocolError):
+                ScenarioDefinition.from_mapping(definition)
 
     def test_scenario_two_safety_rejects_real_sources_and_network(self):
         for key, value in (("real_filesystem_secrets", True), ("environment_secrets", True), ("credential_stores", True), ("external_network_action", True)):
