@@ -12,6 +12,7 @@ import subprocess
 from typing import Callable, Protocol
 
 from .physical_target_discovery import PhysicalIdentityEvidence, _explicit_ipv4
+from .physical_fixture_isolation import run_fixture_path, validate_run_fixture_path, validate_run_id
 
 
 FIXTURE_RELATIVE_PATH = "kimura-physical-fixture"
@@ -122,20 +123,23 @@ def run_baseline(
     """Set up one fixed fixture, append one event, and prove the exact delta."""
     target_ip = _explicit_ipv4(target_ip)
     _fixture_path(fixture_path)
-    if not _RUN_ID.fullmatch(run_id):
-        raise ValueError("run_id is malformed")
+    try:
+        validate_run_id(run_id)
+    except ValueError as exc:
+        raise ValueError(str(exc)) from None
+    scoped_fixture = run_fixture_path(run_id)
     if identity is not None and (identity.target_address != target_ip or identity.ssh_user != ssh_user or not identity.identity_verified):
         identity_verified = False
-    base = dict(target_ip=target_ip, ssh_user=ssh_user, fixture_path=f"~/{fixture_path}", run_id=run_id, action=ACTION, synthetic_local_only=True, external_destination=None, external_network_action=False, identity_verified=identity_verified, observed_hostname=identity.observed_hostname if identity else None, observed_architecture=identity.observed_architecture if identity else None, observed_model=identity.observed_model if identity else None)
+    base = dict(target_ip=target_ip, ssh_user=ssh_user, fixture_path=f"~/{scoped_fixture}", run_id=run_id, action=ACTION, synthetic_local_only=True, external_destination=None, external_network_action=False, identity_verified=identity_verified, observed_hostname=identity.observed_hostname if identity else None, observed_architecture=identity.observed_architecture if identity else None, observed_model=identity.observed_model if identity else None)
     if not identity_verified:
         return BaselineEvidence(**base, pre_event_count=None, post_event_count=None, event_id=None, execution_timestamp=None, baseline_result="UNAVAILABLE", synthetic_impact="NOT CONFIRMED", failure_reason="target identity not verified")
     try:
-        adapter.setup_fixture(target_ip, ssh_user, fixture_path)
-        before = _parse_ledger(adapter.read_ledger(target_ip, ssh_user, fixture_path))
+        adapter.setup_fixture(target_ip, ssh_user, scoped_fixture)
+        before = _parse_ledger(adapter.read_ledger(target_ip, ssh_user, scoped_fixture))
         event_id = f"baseline-{run_id}"
         event = {"event_id": event_id, "run_id": run_id, "action": ACTION, "executed": True, "synthetic_local_only": True, "external_destination": None, "external_network_action": False, "execution_timestamp": _timestamp(clock)}
-        adapter.append_event(target_ip, ssh_user, fixture_path, json.dumps(event, sort_keys=True, separators=(",", ":")))
-        after = _parse_ledger(adapter.read_ledger(target_ip, ssh_user, fixture_path))
+        adapter.append_event(target_ip, ssh_user, scoped_fixture, json.dumps(event, sort_keys=True, separators=(",", ":")))
+        after = _parse_ledger(adapter.read_ledger(target_ip, ssh_user, scoped_fixture))
         matches = [item for item in after if item.get("event_id") == event_id]
         if len(after) != len(before) + 1:
             raise BaselineError("ledger count did not increase by exactly one")
@@ -166,34 +170,32 @@ class SshBaselineAdapter:
         return result.stdout
 
     def setup_fixture(self, target_ip: str, ssh_user: str, fixture_path: str) -> None:
-        _fixture_path(fixture_path)
+        validate_run_fixture_path(fixture_path)
         root = f"$HOME/{fixture_path}"
-        command = f'test -d "$HOME" && mkdir -p {root} && if [ -e {root}/metadata.json ] && ! grep -Fxq "fixture=kimura-synthetic-baseline-v1 local_only=true" {root}/metadata.json; then exit 1; fi && if [ ! -e {root}/metadata.json ]; then printf "%s\n" "fixture=kimura-synthetic-baseline-v1 local_only=true" > {root}/metadata.json; fi && if [ ! -e {root}/ledger.jsonl ]; then : > {root}/ledger.jsonl; fi'
+        policy_json = shlex.quote(json.dumps({"fixture": "kimura-synthetic-baseline-v1", "rules": {ACTION: "permit"}}, sort_keys=True, separators=(",", ":")))
+        command = f"test -d \"$HOME\" && mkdir -p {root} && if [ -e {root}/metadata.json ] && ! grep -Fxq \"fixture=kimura-synthetic-baseline-v1 run_scoped=true\" {root}/metadata.json; then exit 1; fi && if [ ! -e {root}/metadata.json ]; then printf \"%s\\n\" \"fixture=kimura-synthetic-baseline-v1 run_scoped=true\" > {root}/metadata.json; fi && if [ ! -e {root}/policy.json ]; then printf \"%s\\n\" {policy_json} > {root}/policy.json; fi && if [ ! -e {root}/ledger.jsonl ]; then : > {root}/ledger.jsonl; fi"
         self._run(target_ip, ssh_user, command)
 
+
     def read_ledger(self, target_ip: str, ssh_user: str, fixture_path: str) -> str:
-        _fixture_path(fixture_path)
+        validate_run_fixture_path(fixture_path)
         root = f"$HOME/{fixture_path}"
-        return self._run(target_ip, ssh_user, f"test -f {root}/ledger.jsonl && cat {root}/ledger.jsonl")
+        raw = self._run(target_ip, ssh_user, f"test -f {root}/ledger.jsonl && cat {root}/ledger.jsonl")
+        _parse_ledger(raw)
+        return raw
 
     def append_event(self, target_ip: str, ssh_user: str, fixture_path: str, event_json: str) -> None:
-        _fixture_path(fixture_path)
+        validate_run_fixture_path(fixture_path)
+        run_id = fixture_path.rsplit("/", 1)[-1]
+        try:
+            event = json.loads(event_json)
+        except (TypeError, json.JSONDecodeError):
+            raise BaselineError("event evidence is malformed") from None
+        if not isinstance(event, dict) or event.get("run_id") != run_id or event.get("action") != ACTION or event.get("executed") is not True:
+            raise BaselineError("event evidence is invalid for this run")
+        canonical = json.dumps(event, sort_keys=True, separators=(",", ":"))
+        existing = _parse_ledger(self.read_ledger(target_ip, ssh_user, fixture_path))
+        if any(item.get("event_id") == event.get("event_id") for item in existing):
+            raise BaselineError("duplicate event")
         root = f"$HOME/{fixture_path}"
-        self._run(target_ip, ssh_user, f"test -f {root}/ledger.jsonl && printf '%s\\n' {shlex.quote(event_json)} >> {root}/ledger.jsonl")
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run one controlled local-only Pi baseline")
-    parser.add_argument("--target-ip", required=True)
-    parser.add_argument("--ssh-user", required=True)
-    parser.add_argument("--run-id", required=True)
-    args = parser.parse_args(argv)
-    from .physical_target_discovery import SshReadOnlyAdapter, discover_and_verify
-    identity = discover_and_verify(args.target_ip, args.ssh_user, adapter=SshReadOnlyAdapter())
-    result = run_baseline(args.target_ip, args.ssh_user, adapter=SshBaselineAdapter(), identity_verified=identity.identity_verified, identity=identity, run_id=args.run_id)
-    print(json.dumps(result.to_dict(), sort_keys=True))
-    return 0 if result.allowed else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+        self._run(target_ip, ssh_user, f"test -f {root}/ledger.jsonl && printf \x27%s\\n\x27 {shlex.quote(canonical)} >> {root}/ledger.jsonl")

@@ -1,6 +1,10 @@
 import json
+import shlex
+import subprocess
 import unittest
 from datetime import datetime, timezone
+
+from kimura_assessment.physical_fixture_isolation import FixtureIsolationError, run_fixture_path
 
 from kimura_assessment.conference_renderer import render_conference_html
 from kimura_assessment.physical_baseline import (
@@ -8,6 +12,7 @@ from kimura_assessment.physical_baseline import (
     BaselineError,
     FIXTURE_RELATIVE_PATH,
     run_baseline,
+    SshBaselineAdapter,
 )
 
 
@@ -85,6 +90,32 @@ class PhysicalBaselineTests(unittest.TestCase):
         self.assertIn("SYNTHETIC IMPACT CONFIRMED", html)
         self.assertNotIn("FIX VERIFIED", html)
 
+    def test_ssh_adapter_reads_and_appends_only_run_scoped_ledger(self):
+        run_id = "phase45f-run-12345678"
+        path = run_fixture_path(run_id)
+        state = {"ledger": ""}
+        calls = []
+        def runner(argv, **kwargs):
+            command = argv[-1]
+            calls.append(command)
+            if "cat " in command:
+                return subprocess.CompletedProcess(argv, 0, stdout=state["ledger"], stderr="")
+            if ">>" in command:
+                tokens = shlex.split(command)
+                state["ledger"] += tokens[6] + "\n"
+                return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+            return subprocess.CompletedProcess(argv, 1, stdout="", stderr="failure")
+        adapter = SshBaselineAdapter(runner=runner)
+        self.assertEqual(adapter.read_ledger("192.168.2.17", "kimura", path), "")
+        event = {"event_id": "baseline-" + run_id, "run_id": run_id, "action": ACTION, "executed": True, "synthetic_local_only": True, "external_destination": None, "external_network_action": False, "execution_timestamp": "2026-01-01T00:00:00Z"}
+        adapter.append_event("192.168.2.17", "kimura", path, json.dumps(event))
+        self.assertEqual(len(state["ledger"].splitlines()), 1)
+        self.assertEqual(json.loads(state["ledger"]), event)
+        self.assertTrue(any("printf" in command and "ledger.jsonl" in command for command in calls))
+        with self.assertRaises(FixtureIsolationError):
+            adapter.read_ledger("192.168.2.17", "kimura", FIXTURE_RELATIVE_PATH)
+        with self.assertRaises(BaselineError):
+            adapter.append_event("192.168.2.17", "kimura", path, json.dumps(event))
 
 if __name__ == "__main__":
     unittest.main()

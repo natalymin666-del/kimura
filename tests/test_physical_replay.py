@@ -8,6 +8,8 @@ from kimura_assessment.physical_replay import (
     POLICY,
     ReplayError,
     action_fingerprint,
+    parse_remediation_evidence,
+    serialize_remediation_evidence,
     canonical_action_payload,
     run_remediation_and_replay,
 )
@@ -95,5 +97,25 @@ class PhysicalReplayTests(unittest.TestCase):
         failed = render_conference_html(run(ReplayAdapter(write_error="failed")).to_conference_result())
         self.assertNotIn("FIX VERIFIED", failed)
 
+
+
+class RemediationEvidenceSerializationTests(unittest.TestCase):
+    def setUp(self):
+        self.evidence = {"run_id": "phase45i-run-12345678", "remediation": "DENY-ONLY VERIFIED", "policy_before": {"send_email": "permit"}, "policy_after": {"send_email": "deny"}}
+
+    def test_canonical_evidence_round_trip(self):
+        raw = serialize_remediation_evidence(self.evidence)
+        self.assertTrue(raw.endswith("\n"))
+        self.assertEqual(parse_remediation_evidence(raw, self.evidence["run_id"]), self.evidence)
+
+    def test_exact_trailing_n_and_other_malformed_forms_rejected(self):
+        valid = serialize_remediation_evidence(self.evidence)
+        for raw in (valid[:-1] + "n", valid[:-1] + "\\n", valid[:-2] + "\n", valid + "{}\n"):
+            with self.assertRaises(ReplayError):
+                parse_remediation_evidence(raw, self.evidence["run_id"])
+
+    def test_cross_run_evidence_rejected(self):
+        with self.assertRaises(ReplayError):
+            parse_remediation_evidence(serialize_remediation_evidence(self.evidence), "phase45i-other-12345678")
 
 if __name__ == "__main__": unittest.main()
