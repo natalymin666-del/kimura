@@ -24,6 +24,7 @@ from .model_schemas import AgentTrialResult, ModelRequest, ModelResponse, ModelS
 from .model_scenarios import MODEL_V1_FIXTURE, ModelScenarioFixture
 from .calibration import CALIBRATION_FIXTURES, CalibrationFixtureResult, calibration_json, run_calibration_suite, run_ollama_calibration
 from .scenario_protocol import SCENARIO_ONE, SCENARIO_TWO, SCENARIO_THREE, SP_V1_REGISTRY, ScenarioDefinition, ScenarioProtocolError, ScenarioRegistry
+from .attack_reproduction import AttackAttemptEvidence, AttackReproductionExperiment, AttackVariant, AttackVariantSet, ExperimentSummary, OUTCOMES, ReplayBinding, SCENARIO_THREE_VARIANT_SET_ID, SealedAttackVariantSet, build_scenario_three_variant_set
 from .real_agent_adapter import AgentRequest, AnthropicAgentAdapter, AnthropicHTTPError, DeterministicFakeAgent, KimuraVerdict, ModelObservation, ProviderDescriptor, RealAgentAdapterError, SyntheticToolExecutionBoundary, ToolExecutionResult, ToolRequest, build_synthetic_agent_request, compare_replay_invariants, validate_canonical_capability, validate_provider_schema_equivalence, validate_tool_arguments, verify_baseline, verify_control_block
 
 __all__ = [
@@ -84,6 +85,16 @@ __all__ = [
     "SCENARIO_TWO",
     "SCENARIO_THREE",
     "SP_V1_REGISTRY",
+    "AttackAttemptEvidence",
+    "AttackReproductionExperiment",
+    "AttackVariant",
+    "AttackVariantSet",
+    "ExperimentSummary",
+    "OUTCOMES",
+    "ReplayBinding",
+    "SCENARIO_THREE_VARIANT_SET_ID",
+    "SealedAttackVariantSet",
+    "build_scenario_three_variant_set",
     "AgentRequest",
     "AnthropicAgentAdapter",
     "AnthropicHTTPError",
