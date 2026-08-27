@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
+from pathlib import Path
 import hashlib
 import json
 from typing import Any, Callable, Mapping
@@ -369,3 +371,177 @@ def build_scenario_three_variant_set(scenario: ScenarioDefinition) -> AttackVari
         for index, text in enumerate(content, 1)
     )
     return AttackVariantSet(SCENARIO_THREE_VARIANT_SET_ID, 1, scenario, variants)
+
+
+JOURNAL_STATES = ("ALLOCATED", "REQUEST_STARTING", "REQUEST_SENT", "RESPONSE_RECEIVED", "NORMALIZED", "CLASSIFIED")
+
+
+@dataclass(frozen=True, slots=True)
+class AttemptJournalEvent:
+    experiment_id: str
+    variant_set_fingerprint: str
+    variant_id: str
+    content_hash: str
+    run_id: str
+    attempt_ordinal: int
+    provider: str
+    model: str
+    timestamp: str
+    state: str
+    outcome: str | None = None
+    failure_code: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        if self.state not in JOURNAL_STATES or self.attempt_ordinal < 1:
+            raise ValueError("invalid journal event")
+        values = (self.experiment_id, self.variant_set_fingerprint, self.variant_id, self.content_hash, self.run_id, self.provider, self.model, self.timestamp)
+        if not all(isinstance(value, str) and value for value in values):
+            raise ValueError("journal identity is incomplete")
+        result = {"experiment_id": self.experiment_id, "variant_set_fingerprint": self.variant_set_fingerprint, "variant_id": self.variant_id, "content_hash": self.content_hash, "run_id": self.run_id, "attempt_ordinal": self.attempt_ordinal, "provider": self.provider, "model": self.model, "timestamp": self.timestamp, "state": self.state}
+        if self.outcome is not None:
+            result["outcome"] = self.outcome
+        if self.failure_code is not None:
+            result["failure_code"] = self.failure_code
+        return result
+
+
+class AttemptJournal:
+    _FORBIDDEN = ("api_key", "authorization", "thinking", "raw_response", "raw_prose")
+
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+
+    def append(self, event: AttemptJournalEvent) -> None:
+        data = event.to_dict()
+        encoded = _canonical(data)
+        if any(token in encoded.lower() for token in self._FORBIDDEN):
+            raise ValueError("forbidden diagnostic field")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(encoded + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    def read(self) -> tuple[dict[str, Any], ...]:
+        if not self.path.exists():
+            return ()
+        entries = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            if not line:
+                raise ValueError("journal contains blank record")
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("journal record is malformed")
+            entries.append(value)
+        return tuple(entries)
+
+    def experiment_ids(self) -> frozenset[str]:
+        return frozenset(item["experiment_id"] for item in self.read() if isinstance(item.get("experiment_id"), str))
+
+
+@dataclass(frozen=True, slots=True)
+class ExperimentRecovery:
+    experiment_id: str
+    variants_never_started: tuple[str, ...]
+    variants_request_sent: tuple[str, ...]
+    variants_response_received: tuple[str, ...]
+    variants_classified: tuple[str, ...]
+    ambiguous_variants: tuple[str, ...]
+    minimum_proven_api_calls: int
+    maximum_possible_api_calls: int
+    interrupted: bool
+
+    @property
+    def metrics_available(self) -> bool:
+        return not self.interrupted
+
+
+def recover_experiment(journal: AttemptJournal, *, experiment_id: str, variant_set: SealedAttackVariantSet) -> ExperimentRecovery:
+    allowed = {variant.variant_id for variant in variant_set.variant_set.variants}
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for event in journal.read():
+        if event.get("experiment_id") != experiment_id:
+            continue
+        variant_id = event.get("variant_id")
+        if variant_id not in allowed:
+            raise ValueError("journal contains unknown variant")
+        if event.get("variant_set_fingerprint") != variant_set.fingerprint:
+            raise ValueError("journal variant-set fingerprint mismatch")
+        grouped.setdefault(variant_id, []).append(event)
+    never, sent, received, classified, ambiguous = [], [], [], [], []
+    for variant in variant_set.variant_set.variants:
+        states = {event.get("state") for event in grouped.get(variant.variant_id, ())}
+        if not states:
+            never.append(variant.variant_id)
+        if "REQUEST_SENT" in states:
+            sent.append(variant.variant_id)
+        if "RESPONSE_RECEIVED" in states:
+            received.append(variant.variant_id)
+        if "CLASSIFIED" in states:
+            classified.append(variant.variant_id)
+        if "REQUEST_STARTING" in states and "REQUEST_SENT" not in states:
+            ambiguous.append(variant.variant_id)
+    minimum = len(sent)
+    maximum = minimum + len(ambiguous)
+    return ExperimentRecovery(experiment_id, tuple(never), tuple(sent), tuple(received), tuple(classified), tuple(ambiguous), minimum, maximum, len(classified) != len(allowed) or bool(ambiguous))
+
+
+class DurableAttackExperimentRunner:
+    def __init__(self, *, experiment: AttackReproductionExperiment, journal: AttemptJournal, clock: Callable[[], str]):
+        if experiment.experiment_id in journal.experiment_ids():
+            raise ValueError("experiment id already exists")
+        self.experiment = experiment
+        self.journal = journal
+        self.clock = clock
+        self._started: set[str] = set()
+        self._attempt_ordinals: dict[str, int] = {}
+
+    def _event(self, variant: AttackVariant, state: str, outcome: str | None = None, failure_code: str | None = None) -> AttemptJournalEvent:
+        return AttemptJournalEvent(self.experiment.experiment_id, self.experiment.variant_set.fingerprint, variant.variant_id, variant.content_sha256, self.experiment.run_id, self._attempt_ordinals[variant.variant_id], self.experiment.provider, self.experiment.model, self.clock(), state, outcome, failure_code)
+
+    def run_variant(self, variant_id: str, operation: Callable[[], AttackAttemptEvidence]) -> AttackAttemptEvidence | None:
+        if variant_id in self._started:
+            raise ValueError("variant already started; retries are forbidden")
+        variant = self.experiment.variant_set.variant_set.resolve(variant_id)
+        self._started.add(variant_id)
+        self._attempt_ordinals[variant_id] = len(self._started)
+        self.journal.append(self._event(variant, "ALLOCATED"))
+        self.journal.append(self._event(variant, "REQUEST_STARTING"))
+        self.journal.append(self._event(variant, "REQUEST_SENT"))
+        try:
+            evidence = operation()
+        except TimeoutError:
+            self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", "provider_timeout"))
+            return None
+        except KeyboardInterrupt:
+            raise
+        except AnthropicHTTPError:
+            self.journal.append(self._event(variant, "CLASSIFIED", "PROVIDER_ERROR", "provider_error"))
+            return None
+        except RealAgentAdapterError as exc:
+            self.journal.append(self._event(variant, "CLASSIFIED", "NORMALIZATION_ERROR", getattr(exc, "reason", None) or "normalization_error"))
+            return None
+        except BaseException as exc:
+            self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", type(exc).__name__.lower()))
+            return None
+        if not isinstance(evidence, AttackAttemptEvidence):
+            self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", "invalid_attempt_evidence"))
+            return None
+        if evidence.experiment_id != self.experiment.experiment_id or evidence.variant_id != variant.variant_id or evidence.variant_set_fingerprint != self.experiment.variant_set.fingerprint or evidence.run_id != self.experiment.run_id:
+            self.journal.append(self._event(variant, "CLASSIFIED", "HARNESS_ERROR", "attempt_identity_mismatch"))
+            return None
+        self.journal.append(self._event(variant, "RESPONSE_RECEIVED"))
+        self.journal.append(self._event(variant, "NORMALIZED"))
+        self.journal.append(self._event(variant, "CLASSIFIED", evidence.outcome))
+        return evidence
+
+    def run_all(self, operation_factory: Callable[[AttackVariant], Callable[[], AttackAttemptEvidence]]) -> tuple[AttackAttemptEvidence, ...]:
+        results = []
+        for variant in self.experiment.variant_set.variant_set.variants:
+            evidence = self.run_variant(variant.variant_id, operation_factory(variant))
+            if evidence is not None:
+                results.append(evidence)
+        return tuple(results)
+
+    def recover(self) -> ExperimentRecovery:
+        return recover_experiment(self.journal, experiment_id=self.experiment.experiment_id, variant_set=self.experiment.variant_set)
