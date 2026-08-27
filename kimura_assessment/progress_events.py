@@ -33,7 +33,7 @@ _PAYLOAD_FIELDS: dict[ProgressEventType, frozenset[str]] = {
     ProgressEventType.CLEANUP_FAILED: frozenset({"failure_code"}),
     ProgressEventType.FIX_VERIFIED: frozenset({"baseline_ledger_count", "final_ledger_count"}),
     ProgressEventType.ASSESSMENT_PARTIAL: frozenset({"failure_code", "last_proven_event", "cleanup_completed"}),
-    ProgressEventType.ASSESSMENT_FAILED: frozenset({"failure_code", "last_proven_event", "cleanup_completed"}),
+    ProgressEventType.ASSESSMENT_FAILED: frozenset({"failure_code", "last_proven_event", "cleanup_completed", "failure_stage", "exception_class", "exception_message", "conference_run_id", "physical_run_id", "lifecycle_state", "last_verified_event", "developer_location"}),
 }
 
 

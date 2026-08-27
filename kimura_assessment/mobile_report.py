@@ -121,7 +121,9 @@ def derive_mobile_report(snapshot: Mapping[str, Any], *, expected_run_id: str | 
     if replay:
         replay_impact = False if replay.get("decision") == "blocked" and replay.get("executed") is True and replay.get("synthetic_event_id") is None else True if replay.get("synthetic_event_id") else None
     cleanup_status = "COMPLETED" if cleanup.get("cleanup_attempted") is True else "NOT ESTABLISHED"
-    failure_reason = _text(failure_event.get("failure_code")) or ("fix_verified invariants not proven" if state == "fix_verified" and not fix_verified else None)
+    failure_stage = _text(failure_event.get("failure_stage"))
+    failure_message = _text(failure_event.get("exception_message"))
+    failure_reason = (failure_stage + ": " + failure_message if failure_stage and failure_message else _text(failure_event.get("failure_code"))) or ("fix_verified invariants not proven" if state == "fix_verified" and not fix_verified else None)
     protocol = target.get("protocol_version")
     return MobileReport(
         run_id=run_id,

@@ -1,7 +1,8 @@
 import unittest
 
 from kimura_assessment.mobile_report import MobileReportError, derive_mobile_report
-from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator
+from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator, validate_physical_fixture_binding
+from kimura_assessment.physical_fixture_isolation import FixtureIsolationError, run_fixture_path, validate_run_fixture_path
 from kimura_assessment.progress_events import ProgressEmitter, ProgressEventType
 from kimura_assessment.progress_journal import ProgressJournal
 
@@ -54,6 +55,32 @@ class PhysicalConferenceOrchestrationTests(unittest.TestCase):
         orchestrator.start()
         self.assertEqual(adapter.calls, ["discover", "baseline", "remediate", "replay"])
 
+    def test_conference_and_physical_run_ids_are_explicitly_bound(self):
+        adapter = Adapter()
+        journal = ProgressJournal()
+        emitter = ProgressEmitter(journal.append, run_id=RUN_ID)
+        orchestrator = PhysicalConferenceOrchestrator(RUN_ID, adapter=adapter, emit=emitter.emit)
+        result = orchestrator.start()
+        self.assertTrue(result.fix_verified)
+        self.assertNotEqual(orchestrator.run_id, orchestrator.physical_run_id)
+        self.assertTrue(orchestrator.physical_run_id.startswith("physical-"))
+        self.assertEqual(orchestrator.fixture_path, run_fixture_path(orchestrator.physical_run_id))
+        with self.assertRaises(FixtureIsolationError):
+            validate_run_fixture_path("kimura-physical-fixture")
+        with self.assertRaises(FixtureIsolationError):
+            validate_physical_fixture_binding(orchestrator.physical_run_id, run_fixture_path(RUN_ID))
+        with self.assertRaises(FixtureIsolationError):
+            validate_run_fixture_path("kimura-physical-fixture/runs/" + orchestrator.physical_run_id + "/../" + orchestrator.physical_run_id)
+
+    def test_invalid_or_mixed_physical_run_binding_is_rejected(self):
+        with self.assertRaises(ValueError):
+            PhysicalConferenceOrchestrator(RUN_ID, adapter=Adapter(), emit=lambda *_: None, physical_run_id=RUN_ID)
+        with self.assertRaises(ValueError):
+            PhysicalConferenceOrchestrator(RUN_ID, adapter=Adapter(), emit=lambda *_: None, physical_run_id="../other-run")
+        result, journal = run(Adapter(baseline={"run_id": RUN_ID}), run_id=RUN_ID + "-binding")
+        self.assertFalse(result.fix_verified)
+        self.assertNotIn(ProgressEventType.FIX_VERIFIED, [event.event_type for event in journal.get_events_after(RUN_ID + "-binding", 0)])
+
     def test_success_maps_each_proven_checkpoint_and_binds_report(self):
         result, journal = run(Adapter())
         self.assertTrue(result.fix_verified)
@@ -61,6 +88,30 @@ class PhysicalConferenceOrchestrationTests(unittest.TestCase):
         self.assertEqual([event.event_type for event in events], [ProgressEventType.ASSESSMENT_STARTED, ProgressEventType.TARGET_VERIFIED, ProgressEventType.BASELINE_VALIDATED, ProgressEventType.REMEDIATION_VERIFIED, ProgressEventType.REPLAY_IDENTITY_VERIFIED, ProgressEventType.REPLAY_VALIDATED, ProgressEventType.CLEANUP_COMPLETED, ProgressEventType.FIX_VERIFIED])
         report = derive_mobile_report(journal.get_latest_snapshot(RUN_ID).to_dict(), expected_run_id=RUN_ID)
         self.assertEqual(report.run_id, RUN_ID)
+
+    def test_failure_evidence_preserves_stage_message_ids_and_redacts_secrets(self):
+        class FailingAdapter(Adapter):
+            def baseline(self, run_id):
+                self.calls.append("baseline")
+                raise FixtureIsolationError("fixture path rejected; token=super-secret")
+        result, journal = run(FailingAdapter(), run_id=RUN_ID + "-diagnostic")
+        self.assertFalse(result.fix_verified)
+        snapshot = journal.get_latest_snapshot(RUN_ID + "-diagnostic")
+        failure = snapshot.evidence[ProgressEventType.ASSESSMENT_FAILED.value]
+        self.assertEqual(failure["failure_stage"], "setup")
+        self.assertEqual(failure["exception_class"], "FixtureIsolationError")
+        self.assertIn("fixture path rejected", failure["exception_message"])
+        self.assertNotIn("super-secret", failure["exception_message"])
+        self.assertEqual(failure["conference_run_id"], RUN_ID + "-diagnostic")
+        self.assertEqual(failure["physical_run_id"], "physical-" + RUN_ID + "-diagnostic")
+        self.assertEqual(failure["last_verified_event"], ProgressEventType.TARGET_VERIFIED.value)
+        self.assertEqual(snapshot.state, ProgressEventType.ASSESSMENT_FAILED.value)
+        self.assertNotIn(ProgressEventType.BASELINE_VALIDATED.value, snapshot.evidence)
+        self.assertNotIn(ProgressEventType.FIX_VERIFIED.value, snapshot.evidence)
+        report = derive_mobile_report(snapshot.to_dict(), expected_run_id=RUN_ID + "-diagnostic")
+        self.assertEqual(report.status, "FAILED")
+        self.assertIn("setup: fixture path rejected", report.failure_reason)
+        self.assertNotIn("super-secret", report.failure_reason)
 
     def test_duplicate_start_rejected(self):
         adapter = Adapter()
