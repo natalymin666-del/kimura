@@ -29,6 +29,27 @@ def _payload(evidence: Mapping[str, Any], key: str) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
 
 
+_SCENARIO_FIELDS = ("scenario_id", "scenario_version", "scenario_fingerprint")
+_SCENARIO_EVENTS = ("target_verified", "baseline_validated", "remediation_verified", "replay_identity_verified", "replay_validated", "fix_verified")
+
+
+def _scenario_binding(evidence: Mapping[str, Any]) -> tuple[str, int, str] | None:
+    bindings = []
+    for name in _SCENARIO_EVENTS:
+        payload = _payload(evidence, name)
+        present = [field for field in _SCENARIO_FIELDS if field in payload]
+        if present and len(present) != len(_SCENARIO_FIELDS):
+            return None
+        if present:
+            scenario_id, version, fingerprint = (payload[field] for field in _SCENARIO_FIELDS)
+            if not isinstance(scenario_id, str) or not isinstance(version, int) or isinstance(version, bool) or not isinstance(fingerprint, str):
+                return None
+            bindings.append((scenario_id, version, fingerprint))
+    if not bindings:
+        return ()
+    return bindings[0] if all(item == bindings[0] for item in bindings) else None
+
+
 def _pass_invariants(evidence: Mapping[str, Any]) -> bool:
     baseline = _payload(evidence, "baseline_validated")
     remediation = _payload(evidence, "remediation_verified")
@@ -43,8 +64,9 @@ def _pass_invariants(evidence: Mapping[str, Any]) -> bool:
         and remediation.get("policy_digest_before") != remediation.get("policy_digest_after")
         and bool(_text(identity.get("fixture_sha256")))
         and bool(_text(identity.get("action")))
-        and replay == {"decision": "blocked", "executed": True, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1}
+        and {key: value for key, value in replay.items() if key not in _SCENARIO_FIELDS} == {"decision": "blocked", "executed": True, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1}
         and cleanup.get("cleanup_attempted") is True
+        and _scenario_binding(evidence) is not None
     )
 
 
@@ -78,6 +100,9 @@ class MobileReport:
     cleanup_status: str
     fix_verified: bool
     failure_reason: str | None
+    scenario_id: str | None
+    scenario_version: int | None
+    scenario_fingerprint: str | None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -107,6 +132,13 @@ def derive_mobile_report(snapshot: Mapping[str, Any], *, expected_run_id: str | 
     replay = _payload(evidence, "replay_validated")
     cleanup = _payload(evidence, "cleanup_completed")
     failure_event = _payload(evidence, state)
+    binding = _scenario_binding(evidence)
+    if binding is None:
+        scenario_id = scenario_version = scenario_fingerprint = None
+    elif binding == ():
+        scenario_id = scenario_version = scenario_fingerprint = None
+    else:
+        scenario_id, scenario_version, scenario_fingerprint = binding
     fix_verified = state == "fix_verified" and _pass_invariants(evidence)
     status = "PASS" if fix_verified else "PARTIAL" if state == "assessment_partial" else "FAILED"
     baseline_event_id = _text(baseline.get("event_id"))
@@ -154,6 +186,9 @@ def derive_mobile_report(snapshot: Mapping[str, Any], *, expected_run_id: str | 
         cleanup_status=cleanup_status,
         fix_verified=fix_verified,
         failure_reason=failure_reason,
+        scenario_id=scenario_id,
+        scenario_version=scenario_version,
+        scenario_fingerprint=scenario_fingerprint,
     )
 
 
@@ -202,4 +237,4 @@ def render_mobile_report_html(report: MobileReport) -> str:
     after = _display(report.replay_decision.upper() if report.replay_decision else None)
     identity = "SAME FIXTURE ✓ · SHA-256 MATCHED" if report.replay_identity_verified else "SAME FIXTURE · NOT VERIFIED"
     replay_impact = "NO SYNTHETIC IMPACT" if report.replay_synthetic_impact_confirmed is False else "IMPACT CONFIRMED" if report.replay_synthetic_impact_confirmed is True else "IMPACT NOT ESTABLISHED"
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070a0f"><title>Kimura · Mobile Report</title><style>:root{{color-scheme:dark;--ink:#f4f7fb;--muted:#98a4b5;--line:#273241;--surface:#111a25;--cyan:#69d7e8;--green:#73e0a2;--amber:#f2be68;--red:#ff7c86}}*{{box-sizing:border-box}}body{{margin:0;background:#070a0f;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}}main{{width:min(100%,680px);margin:auto;padding:20px;display:grid;gap:18px}}header{{display:flex;justify-content:space-between;gap:12px;align-items:start}}.brand{{font-weight:900;letter-spacing:.18em}}.sub,.label,footer{{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase}}.status{{border:1px solid var(--{('green' if report.status == 'PASS' else 'amber' if report.status == 'PARTIAL' else 'red')});color:var(--{('green' if report.status == 'PASS' else 'amber' if report.status == 'PARTIAL' else 'red')});border-radius:999px;padding:6px 10px;font-weight:800;letter-spacing:.12em}}section,details{{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px}}h1,h2,p{{margin:0}}h1{{overflow-wrap:anywhere}}h1{{font-size:clamp(28px,9vw,50px);line-height:1;letter-spacing:-.06em}}h2{{font-size:16px;letter-spacing:.12em}}.target{{color:var(--cyan);font-weight:800}}.story{{display:grid;grid-template-columns:1fr 28px 1fr;gap:10px;align-items:stretch}}.state{{padding:14px;border:1px solid var(--line);border-radius:10px}}.before{{border-color:#70552d}}.after{{border-color:#2e6d50}}.decision{{font-size:24px;font-weight:900;margin-top:10px}}.before .decision{{color:var(--amber)}}.after .decision{{color:var(--green)}}.arrow{{align-self:center;text-align:center;color:var(--cyan);font-size:24px}}.proof{{grid-column:1/-1;color:var(--cyan);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}}dl{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:9px 14px;margin:0}}dt{{color:var(--muted);font-size:12px}}dd{{margin:0;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}}footer{{line-height:1.6;overflow-wrap:anywhere}}@media(max-width:600px){{main{{padding:15px}}.story{{grid-template-columns:1fr}}.arrow{{transform:rotate(90deg)}}dl{{grid-template-columns:1fr}}}}</style></head><body><main data-run-id="{escape(report.run_id, quote=True)}"><header><div><div class="brand">KIMURA</div><div class="sub">Mobile assessment handoff</div></div><div class="status">{status}</div></header><section><div class="label">Exact assessment run</div><h1>{_display(report.run_id)}</h1><p class="target">{_display(report.target_id)} · {_display(report.target_kind)} · protocol {_display(report.protocol_version)}</p></section><section><div class="label">Before → after security story</div><div class="story"><div class="state before"><h2>BEFORE</h2><div class="decision">{before}</div><p>{_display("SYNTHETIC IMPACT CONFIRMED" if report.baseline_impact_confirmed is True else "IMPACT NOT ESTABLISHED")}</p></div><div class="arrow">→</div><div class="state after"><h2>EXACT REPLAY</h2><div class="decision">{after}</div><p>{_display(replay_impact)}</p></div><div class="proof">{_display(identity)}</div></div></section><section><div class="label">Remediation and outcome</div><p>{_display("DENY-ONLY VERIFIED" if report.deny_only_verified is True else "DENY-ONLY NOT ESTABLISHED")}</p><p>{_display("FIX VERIFIED" if report.fix_verified else report.status)}</p></section><details><summary>Evidence · runtime-derived facts</summary><dl><dt>Target ID</dt><dd>{_display(report.target_id)}</dd><dt>Baseline action</dt><dd>{_display(report.baseline_action)}</dd><dt>Baseline event</dt><dd>{_display(report.baseline_event_id)}</dd><dt>Baseline ledger</dt><dd>{_display(report.baseline_ledger_count)}</dd><dt>Policy</dt><dd>{_display(report.policy_after)}</dd><dt>Policy before</dt><dd>{_display(report.policy_before)}</dd><dt>Policy after</dt><dd>{_display(report.policy_after)}</dd><dt>Replay executed</dt><dd>{_display(report.replay_executed)}</dd><dt>Final ledger</dt><dd>{_display(report.final_ledger_count)}</dd><dt>Cleanup</dt><dd>{_display(report.cleanup_status)}</dd><dt>Failure reason</dt><dd>{_display(report.failure_reason)}</dd></dl></details><footer>Owned isolated synthetic target · no real external action occurred · offline report</footer></main></body></html>'''
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070a0f"><title>Kimura · Mobile Report</title><style>:root{{color-scheme:dark;--ink:#f4f7fb;--muted:#98a4b5;--line:#273241;--surface:#111a25;--cyan:#69d7e8;--green:#73e0a2;--amber:#f2be68;--red:#ff7c86}}*{{box-sizing:border-box}}body{{margin:0;background:#070a0f;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}}main{{width:min(100%,680px);margin:auto;padding:20px;display:grid;gap:18px}}header{{display:flex;justify-content:space-between;gap:12px;align-items:start}}.brand{{font-weight:900;letter-spacing:.18em}}.sub,.label,footer{{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase}}.status{{border:1px solid var(--{('green' if report.status == 'PASS' else 'amber' if report.status == 'PARTIAL' else 'red')});color:var(--{('green' if report.status == 'PASS' else 'amber' if report.status == 'PARTIAL' else 'red')});border-radius:999px;padding:6px 10px;font-weight:800;letter-spacing:.12em}}section,details{{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px}}h1,h2,p{{margin:0}}h1{{overflow-wrap:anywhere}}h1{{font-size:clamp(28px,9vw,50px);line-height:1;letter-spacing:-.06em}}h2{{font-size:16px;letter-spacing:.12em}}.target{{color:var(--cyan);font-weight:800}}.story{{display:grid;grid-template-columns:1fr 28px 1fr;gap:10px;align-items:stretch}}.state{{padding:14px;border:1px solid var(--line);border-radius:10px}}.before{{border-color:#70552d}}.after{{border-color:#2e6d50}}.decision{{font-size:24px;font-weight:900;margin-top:10px}}.before .decision{{color:var(--amber)}}.after .decision{{color:var(--green)}}.arrow{{align-self:center;text-align:center;color:var(--cyan);font-size:24px}}.proof{{grid-column:1/-1;color:var(--cyan);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}}dl{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:9px 14px;margin:0}}dt{{color:var(--muted);font-size:12px}}dd{{margin:0;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}}footer{{line-height:1.6;overflow-wrap:anywhere}}@media(max-width:600px){{main{{padding:15px}}.story{{grid-template-columns:1fr}}.arrow{{transform:rotate(90deg)}}dl{{grid-template-columns:1fr}}}}</style></head><body><main data-run-id="{escape(report.run_id, quote=True)}"><header><div><div class="brand">KIMURA</div><div class="sub">Mobile assessment handoff</div></div><div class="status">{status}</div></header><section><div class="label">Exact assessment run</div><h1>{_display(report.run_id)}</h1><p class="target">{_display(report.target_id)} · {_display(report.target_kind)} · protocol {_display(report.protocol_version)}</p></section><section><div class="label">Before → after security story</div><div class="story"><div class="state before"><h2>BEFORE</h2><div class="decision">{before}</div><p>{_display("SYNTHETIC IMPACT CONFIRMED" if report.baseline_impact_confirmed is True else "IMPACT NOT ESTABLISHED")}</p></div><div class="arrow">→</div><div class="state after"><h2>EXACT REPLAY</h2><div class="decision">{after}</div><p>{_display(replay_impact)}</p></div><div class="proof">{_display(identity)}</div></div></section><section><div class="label">Remediation and outcome</div><p>{_display("DENY-ONLY VERIFIED" if report.deny_only_verified is True else "DENY-ONLY NOT ESTABLISHED")}</p><p>{_display("FIX VERIFIED" if report.fix_verified else report.status)}</p></section><details><summary>Evidence · runtime-derived facts</summary><dl><dt>Scenario</dt><dd>{_display(report.scenario_id)}</dd><dt>Scenario version</dt><dd>{_display(report.scenario_version)}</dd><dt>Scenario fingerprint</dt><dd>{_display(report.scenario_fingerprint)}</dd><dt>Target ID</dt><dd>{_display(report.target_id)}</dd><dt>Baseline action</dt><dd>{_display(report.baseline_action)}</dd><dt>Baseline event</dt><dd>{_display(report.baseline_event_id)}</dd><dt>Baseline ledger</dt><dd>{_display(report.baseline_ledger_count)}</dd><dt>Policy</dt><dd>{_display(report.policy_after)}</dd><dt>Policy before</dt><dd>{_display(report.policy_before)}</dd><dt>Policy after</dt><dd>{_display(report.policy_after)}</dd><dt>Replay executed</dt><dd>{_display(report.replay_executed)}</dd><dt>Final ledger</dt><dd>{_display(report.final_ledger_count)}</dd><dt>Cleanup</dt><dd>{_display(report.cleanup_status)}</dd><dt>Failure reason</dt><dd>{_display(report.failure_reason)}</dd></dl></details><footer>Owned isolated synthetic target · no real external action occurred · offline report</footer></main></body></html>'''

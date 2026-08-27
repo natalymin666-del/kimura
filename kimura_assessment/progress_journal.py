@@ -60,6 +60,20 @@ _SUCCESS_ORDER = (
     ProgressEventType.FIX_VERIFIED,
 )
 _TERMINAL = frozenset({ProgressEventType.ASSESSMENT_PARTIAL, ProgressEventType.ASSESSMENT_FAILED, ProgressEventType.FIX_VERIFIED})
+_SCENARIO_FIELDS = frozenset({"scenario_id", "scenario_version", "scenario_fingerprint"})
+
+
+def _validate_scenario_bindings(events: list[ProgressEvent]) -> None:
+    bindings = []
+    for event in events:
+        present = _SCENARIO_FIELDS & event.payload.keys()
+        if present and present != _SCENARIO_FIELDS:
+            raise ProgressEventOrderError("incomplete scenario evidence binding")
+        if present:
+            bindings.append(tuple(event.payload[name] for name in sorted(_SCENARIO_FIELDS)))
+    if bindings and any(binding != bindings[0] for binding in bindings[1:]):
+        raise ProgressEventOrderError("scenario evidence binding is inconsistent")
+
 
 
 def _canonical_event(event: ProgressEvent) -> ProgressEvent:
@@ -85,7 +99,7 @@ def _validate_fix_preconditions(events: list[ProgressEvent], fix_event: Progress
     replay_identity = by_type[ProgressEventType.REPLAY_IDENTITY_VERIFIED].payload
     replay = by_type[ProgressEventType.REPLAY_VALIDATED].payload
     cleanup = by_type[ProgressEventType.CLEANUP_COMPLETED].payload
-    if fix_event.payload != {"baseline_ledger_count": 1, "final_ledger_count": 1}:
+    if {key: value for key, value in fix_event.payload.items() if key not in {"scenario_id", "scenario_version", "scenario_fingerprint"}} != {"baseline_ledger_count": 1, "final_ledger_count": 1}:
         raise ProgressEventOrderError("fix_verified requires expected final ledger evidence")
     if baseline.get("decision") != "allowed" or baseline.get("ledger_count") != 1 or not baseline.get("event_id"):
         raise ProgressEventOrderError("fix_verified requires validated baseline evidence")
@@ -93,7 +107,8 @@ def _validate_fix_preconditions(events: list[ProgressEvent], fix_event: Progress
         raise ProgressEventOrderError("fix_verified requires verified remediation")
     if not replay_identity.get("fixture_sha256") or not replay_identity.get("action"):
         raise ProgressEventOrderError("fix_verified requires verified replay identity")
-    if replay != {
+    replay_base = {key: value for key, value in replay.items() if key not in _SCENARIO_FIELDS}
+    if replay_base != {
         "decision": "blocked",
         "executed": True,
         "synthetic_event_id": None,
@@ -111,6 +126,7 @@ def _reduce(run_id: str, events: Iterable[ProgressEvent]) -> ProgressSnapshot | 
         return None
     if accepted[0].event_type is not ProgressEventType.ASSESSMENT_STARTED:
         raise ProgressEventOrderError("run must start with assessment_started")
+    _validate_scenario_bindings(accepted)
     evidence: dict[str, dict[str, Any]] = {}
     previous_success_index = -1
     cleanup_event: ProgressEventType | None = None

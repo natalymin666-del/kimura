@@ -61,7 +61,7 @@ class ProgressEvent:
             raise ValueError("run_id must be a non-empty string")
         if self.sequence < 1:
             raise ValueError("sequence must be positive")
-        allowed = _PAYLOAD_FIELDS[self.event_type]
+        allowed = _PAYLOAD_FIELDS[self.event_type] | {"scenario_id", "scenario_version", "scenario_fingerprint"}
         if set(self.payload) - allowed:
             raise ValueError("progress payload contains an unapproved field")
         for value in self.payload.values():
