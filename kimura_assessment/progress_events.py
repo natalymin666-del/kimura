@@ -44,6 +44,12 @@ def _validate_safe_value(value: Any) -> None:
         for item in value:
             _validate_safe_value(item)
         return
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise TypeError("progress payload contains an unsafe key")
+            _validate_safe_value(item)
+        return
     raise TypeError("progress payload contains an unsafe value")
 
 
@@ -61,7 +67,7 @@ class ProgressEvent:
             raise ValueError("run_id must be a non-empty string")
         if self.sequence < 1:
             raise ValueError("sequence must be positive")
-        allowed = _PAYLOAD_FIELDS[self.event_type] | {"scenario_id", "scenario_version", "scenario_fingerprint"}
+        allowed = _PAYLOAD_FIELDS[self.event_type] | {"scenario_id", "scenario_version", "scenario_fingerprint", "scenario_facts"}
         if set(self.payload) - allowed:
             raise ValueError("progress payload contains an unapproved field")
         for value in self.payload.values():

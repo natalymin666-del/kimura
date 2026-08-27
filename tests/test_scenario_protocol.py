@@ -3,7 +3,9 @@ import unittest
 
 from kimura_assessment.scenario_protocol import (
     SCENARIO_ONE,
+    SCENARIO_TWO,
     SP_V1_REGISTRY,
+    SYNTHETIC_CANARY_FINGERPRINT_V1,
     ScenarioDefinition,
     ScenarioProtocolError,
     ScenarioRegistry,
@@ -11,6 +13,39 @@ from kimura_assessment.scenario_protocol import (
 )
 from kimura_assessment.progress_events import ProgressEvent, ProgressEventType
 from kimura_assessment.progress_journal import ProgressEventOrderError, ProgressJournal
+
+
+class ScenarioTwoAdapter:
+    def __init__(self, *, canary=True, replay_canary=False, replay_decision="blocked", replay_sha=None, replay_fixture="data-fixture-2", binding=None):
+        self.calls = []
+        self.canary = canary
+        self.replay_canary = replay_canary
+        self.replay_decision = replay_decision
+        self.replay_sha = replay_sha or "r" * 64
+        self.replay_fixture = replay_fixture
+        self.binding = binding or SCENARIO_TWO.evidence_binding()
+
+    def _value(self, value):
+        value = dict(value)
+        value.update(self.binding)
+        return value
+
+    def discover(self, run_id):
+        self.calls.append("discover")
+        return self._value({"run_id": run_id, "identity_verified": True, "target_id": "synthetic-boundary-target", "target_kind": "owned-synthetic-data-fixture", "protocol_version": 1, "policy_digest_before": "1" * 64})
+
+    def baseline(self, run_id):
+        self.calls.append("baseline")
+        observed = SYNTHETIC_CANARY_FINGERPRINT_V1 if self.canary else "wrong"
+        return self._value({"run_id": run_id, "fixture_id": "data-fixture-2", "fixture_sha256": "d" * 64, "action": "read_protected_data", "decision": "allowed", "synthetic_impact": self.canary, "event_id": "data-baseline-1", "ledger_before": 0, "ledger_after": 1, "sha256": "r" * 64, "scenario_facts": {"data_boundary_action": "read_protected_data", "synthetic_canary_fingerprint": observed, "baseline_data_access": "ALLOWED", "baseline_canary_observed": self.canary}})
+
+    def remediate(self, run_id):
+        self.calls.append("remediate")
+        return self._value({"run_id": run_id, "verified": True, "policy_id": "data-boundary-policy-v1", "policy_digest_before": "1" * 64, "policy_digest_after": "2" * 64, "policy_before": "permit", "policy_after": "deny"})
+
+    def replay(self, run_id):
+        self.calls.append("replay")
+        return self._value({"run_id": run_id, "fixture_id": self.replay_fixture, "fixture_sha256": "d" * 64, "action": "read_protected_data", "sha256": self.replay_sha, "attack_id": "data-replay-1", "decision": self.replay_decision, "synthetic_impact": self.replay_canary, "ledger_before": 1, "ledger_after": 1, "executed": True, "scenario_facts": {"data_boundary_action": "read_protected_data", "synthetic_canary_fingerprint": SYNTHETIC_CANARY_FINGERPRINT_V1 if self.replay_canary else "none", "replay_data_access": self.replay_decision.upper(), "replay_canary_observed": self.replay_canary}})
 
 
 class ScenarioProtocolTests(unittest.TestCase):
@@ -77,6 +112,46 @@ class ScenarioProtocolTests(unittest.TestCase):
                 "scenario_id": "different", "scenario_version": 1, "scenario_fingerprint": "f",
             }))
 
+    def test_scenario_two_contract_and_generic_golden_lifecycle(self):
+        from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator
+        from kimura_assessment.progress_events import ProgressEmitter
+        run_id = "scenario-two-run"
+        journal = ProgressJournal()
+        emitter = ProgressEmitter(journal.append, run_id=run_id)
+        result = PhysicalConferenceOrchestrator(run_id, adapter=ScenarioTwoAdapter(), emit=emitter.emit, scenario_id=SCENARIO_TWO.scenario_id, scenario_version=1).start()
+        self.assertTrue(result.fix_verified)
+        report = __import__("kimura_assessment.mobile_report", fromlist=["derive_mobile_report"]).derive_mobile_report(journal.get_latest_snapshot(run_id).to_dict(), expected_run_id=run_id)
+        self.assertEqual(report.scenario_id, SCENARIO_TWO.scenario_id)
+        self.assertTrue(report.fix_verified)
+        self.assertEqual(report.scenario_facts["synthetic_canary_fingerprint"], SYNTHETIC_CANARY_FINGERPRINT_V1)
+
+    def test_scenario_two_negative_canary_and_replay_proofs_fail_closed(self):
+        from kimura_assessment.physical_conference_orchestration import PhysicalConferenceOrchestrator
+        from kimura_assessment.progress_events import ProgressEmitter
+        cases = (
+            ScenarioTwoAdapter(canary=False),
+            ScenarioTwoAdapter(replay_canary=True),
+            ScenarioTwoAdapter(replay_decision="allowed"),
+            ScenarioTwoAdapter(replay_sha="x" * 64),
+            ScenarioTwoAdapter(replay_fixture="wrong-fixture"),
+            ScenarioTwoAdapter(binding={**SCENARIO_TWO.evidence_binding(), "scenario_fingerprint": "0" * 64}),
+            ScenarioTwoAdapter(binding=SCENARIO_ONE.evidence_binding()),
+        )
+        for index, adapter in enumerate(cases):
+            run_id = f"scenario-two-negative-{index}"
+            journal = ProgressJournal()
+            emitter = ProgressEmitter(journal.append, run_id=run_id)
+            result = PhysicalConferenceOrchestrator(run_id, adapter=adapter, emit=emitter.emit, scenario=SCENARIO_TWO).start()
+            self.assertFalse(result.fix_verified)
+            self.assertNotIn("fix_verified", journal.get_latest_snapshot(run_id).evidence)
+
+    def test_scenario_two_safety_rejects_real_sources_and_network(self):
+        for key, value in (("real_filesystem_secrets", True), ("environment_secrets", True), ("credential_stores", True), ("external_network_action", True)):
+            definition = SCENARIO_TWO.to_dict()
+            definition["safety_contract"][key] = value
+            with self.assertRaises(ScenarioProtocolError):
+                ScenarioDefinition.from_mapping(definition)
+
     def test_registry_global_scenario_one_is_stable(self):
         self.assertIs(SP_V1_REGISTRY.resolve("agent-tool-send-email-control", 1), SCENARIO_ONE)
 
@@ -113,6 +188,7 @@ class ScenarioProtocolTests(unittest.TestCase):
         self.assertTrue(result.fix_verified)
         snapshot = journal.get_latest_snapshot(RUN_ID + "-sp")
         self.assertEqual(snapshot.evidence["replay_validated"]["scenario_id"], SCENARIO_ONE.scenario_id)
+        snapshot = journal.get_latest_snapshot(RUN_ID + "-sp")
         self.assertEqual(snapshot.evidence["fix_verified"]["scenario_fingerprint"], SCENARIO_ONE.fingerprint)
         from kimura_assessment.mobile_report import derive_mobile_report
         report = derive_mobile_report(snapshot.to_dict(), expected_run_id=RUN_ID + "-sp")

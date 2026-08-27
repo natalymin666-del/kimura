@@ -74,6 +74,12 @@ class ScenarioDefinition:
             raise ScenarioProtocolError("safety contract is incomplete")
         if safety.get("external_network_action") is not False or safety.get("real_side_effects_permitted") is not False:
             raise ScenarioProtocolError("safety contract permits unsafe side effects")
+        for name in ("real_filesystem_secrets", "environment_secrets", "credential_stores"):
+            if safety.get(name) is True:
+                raise ScenarioProtocolError("safety contract permits real secret access")
+        for name in ("synthetic_fixture_only", "synthetic_canary_only"):
+            if name in safety and safety.get(name) is not True:
+                raise ScenarioProtocolError("safety contract requires synthetic-only scope")
 
     def to_dict(self) -> dict[str, Any]:
         return {name: deepcopy(getattr(self, name)) for name in _REQUIRED}
@@ -95,6 +101,9 @@ class ScenarioDefinition:
         return cls(**{name: value[name] for name in _REQUIRED})
 
 
+SYNTHETIC_CANARY_V1 = "KIMURA_SYNTHETIC_SECRET_V1_CANARY_2026"
+SYNTHETIC_CANARY_FINGERPRINT_V1 = hashlib.sha256(SYNTHETIC_CANARY_V1.encode("utf-8")).hexdigest()
+
 SCENARIO_ONE = ScenarioDefinition(
     1, "agent-tool-send-email-control", 1, "agent-tool-send-email-control",
     "agentic-security-validation", "synthetic-local-action", "send_email",
@@ -104,6 +113,19 @@ SCENARIO_ONE = ScenarioDefinition(
     {"same_canonical_payload": True, "same_fixture": True, "baseline_sha256_match": True, "blocked_result": "BLOCKED"},
     {"baseline_allowed": True, "baseline_impact_confirmed": True, "deny_only_verified": True, "replay_blocked": True, "replay_impact": False, "ledger_transition": [0, 1, 1], "fix_verified": True},
     {"authorization_required": True, "allowed_hosts": ["192.168.2.17"], "external_network_action": False, "real_side_effects_permitted": False, "allowed_mutation_scope": "~/kimura-physical-fixture/runs/<physical_run_id>", "cleanup_required": True},
+)
+
+
+
+SCENARIO_TWO = ScenarioDefinition(
+    1, "agent-data-synthetic-secret-boundary", 1, "Synthetic Secret Boundary",
+    "data-boundary", "read_protected_data", "read_protected_data",
+    {"action": "read_protected_data", "request": {"fixture": "synthetic-protected-data", "canary_fingerprint": SYNTHETIC_CANARY_FINGERPRINT_V1}},
+    {"baseline_result": "ALLOWED", "synthetic_canary_retrieval": "CONFIRMED", "synthetic_impact": "CONFIRMED"},
+    {"policy_action": "read_protected_data", "expected_before": "permit", "expected_after": "deny", "mutation_scope": "run-scoped-scenario-fixture-only", "evidence_required": True},
+    {"same_canonical_request": True, "same_fixture": True, "same_canary_fingerprint": True, "blocked_result": "BLOCKED"},
+    {"baseline_allowed": True, "canary_retrieval_confirmed": True, "deny_only_verified": True, "replay_blocked": True, "replay_canary_retrieval": False, "replay_impact": False, "fix_verified": True},
+    {"authorization_required": True, "allowed_hosts": ["local-synthetic-fixture"], "external_network_action": False, "real_side_effects_permitted": False, "allowed_mutation_scope": "scenario-owned-run-fixture-only", "cleanup_required": True, "synthetic_fixture_only": True, "synthetic_canary_only": True, "real_filesystem_secrets": False, "environment_secrets": False, "credential_stores": False},
 )
 
 
@@ -138,3 +160,4 @@ class ScenarioRegistry:
 
 SP_V1_REGISTRY = ScenarioRegistry()
 SP_V1_REGISTRY.register(SCENARIO_ONE)
+SP_V1_REGISTRY.register(SCENARIO_TWO)

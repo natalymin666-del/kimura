@@ -107,7 +107,7 @@ def _validate_fix_preconditions(events: list[ProgressEvent], fix_event: Progress
         raise ProgressEventOrderError("fix_verified requires verified remediation")
     if not replay_identity.get("fixture_sha256") or not replay_identity.get("action"):
         raise ProgressEventOrderError("fix_verified requires verified replay identity")
-    replay_base = {key: value for key, value in replay.items() if key not in _SCENARIO_FIELDS}
+    replay_base = {key: value for key, value in replay.items() if key not in (_SCENARIO_FIELDS | {"scenario_facts"})}
     if replay_base != {
         "decision": "blocked",
         "executed": True,

@@ -74,6 +74,7 @@ class PhysicalConferenceOrchestrator:
                 "target_kind": target["target_kind"],
                 "protocol_version": target["protocol_version"],
                 "policy_digest_before": target["policy_digest_before"],
+                **self._facts(target),
             })
             last_verified_event = ProgressEventType.TARGET_VERIFIED.value
             stage = "baseline"
@@ -83,6 +84,7 @@ class PhysicalConferenceOrchestrator:
             self._emit_event(ProgressEventType.BASELINE_VALIDATED, {
                 "fixture_id": baseline["fixture_id"], "fixture_sha256": baseline["fixture_sha256"], "action": baseline["action"],
                 "decision": baseline["decision"], "event_id": baseline["event_id"], "ledger_count": baseline["ledger_after"],
+                **self._facts(baseline),
             })
             last_verified_event = ProgressEventType.BASELINE_VALIDATED.value
             stage = "remediation"
@@ -92,16 +94,17 @@ class PhysicalConferenceOrchestrator:
             self._emit_event(ProgressEventType.REMEDIATION_VERIFIED, {
                 "policy_id": remediation["policy_id"], "policy_digest_before": remediation["policy_digest_before"],
                 "policy_digest_after": remediation["policy_digest_after"], "denied_actions": [baseline["action"]],
+                **self._facts(remediation),
             })
             last_verified_event = ProgressEventType.REMEDIATION_VERIFIED.value
             stage = "replay"
 
             replay = self._stage(self.adapter.replay)
             self._require(replay, replay.get("run_id") == self.physical_run_id and replay.get("fixture_id") == baseline["fixture_id"] and replay.get("fixture_sha256") == baseline["fixture_sha256"] and replay.get("action") == baseline["action"] and replay.get("sha256") == baseline["sha256"] and replay.get("decision") == "blocked" and replay.get("synthetic_impact") is False and replay.get("ledger_before") == 1 and replay.get("ledger_after") == 1, "replay invariant failed")
-            self._emit_event(ProgressEventType.REPLAY_IDENTITY_VERIFIED, {"attack_id": replay["attack_id"], "fixture_id": replay["fixture_id"], "fixture_sha256": replay["fixture_sha256"], "action": replay["action"]})
+            self._emit_event(ProgressEventType.REPLAY_IDENTITY_VERIFIED, {"attack_id": replay["attack_id"], "fixture_id": replay["fixture_id"], "fixture_sha256": replay["fixture_sha256"], "action": replay["action"], **self._facts(replay)})
             last_verified_event = ProgressEventType.REPLAY_IDENTITY_VERIFIED.value
             stage = "final_verification"
-            self._emit_event(ProgressEventType.REPLAY_VALIDATED, {"decision": "blocked", "executed": True, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1})
+            self._emit_event(ProgressEventType.REPLAY_VALIDATED, {"decision": "blocked", "executed": True, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1, **self._facts(replay)})
             self._emit_event(ProgressEventType.CLEANUP_COMPLETED, {"cleanup_attempted": True})
             self._emit_event(ProgressEventType.FIX_VERIFIED, {"baseline_ledger_count": 1, "final_ledger_count": 1})
             return ConferenceRunResult(self.run_id, ProgressEventType.FIX_VERIFIED, True)
@@ -111,6 +114,15 @@ class PhysicalConferenceOrchestrator:
             self._emit_event(ProgressEventType.CLEANUP_COMPLETED, {"cleanup_attempted": True})
             self._emit_event(ProgressEventType.ASSESSMENT_FAILED, {"failure_stage": failure_stage, "exception_class": type(exc).__name__, "exception_message": message, "conference_run_id": self.run_id, "physical_run_id": self.physical_run_id, "failure_code": type(exc).__name__, "lifecycle_state": ProgressEventType.ASSESSMENT_FAILED.value, "last_proven_event": last_verified_event, "last_verified_event": last_verified_event, "cleanup_completed": True, "developer_location": "PhysicalConferenceOrchestrator.start"})
             return ConferenceRunResult(self.run_id, ProgressEventType.ASSESSMENT_FAILED, False, message)
+
+    @staticmethod
+    def _facts(evidence: Mapping[str, Any]) -> dict[str, Any]:
+        facts = evidence.get("scenario_facts", {})
+        if facts is None:
+            return {}
+        if not isinstance(facts, Mapping):
+            raise PhysicalConferenceError("scenario facts are malformed")
+        return {"scenario_facts": dict(facts)}
 
     def _emit_event(self, event_type, payload):
         enriched = dict(payload)
