@@ -40,6 +40,9 @@ class MobileReportTests(unittest.TestCase):
         self.assertTrue(report.deny_only_verified)
         self.assertTrue(report.replay_identity_verified)
         self.assertFalse(report.replay_synthetic_impact_confirmed)
+        self.assertTrue(report.replay_executed)
+        self.assertEqual(report.policy_before, "send_email=permit")
+        self.assertEqual(report.policy_after, "send_email=deny")
         self.assertEqual(report.cleanup_status, "COMPLETED")
 
     def test_partial_and_failed_never_render_pass_or_fix(self):
@@ -68,6 +71,31 @@ class MobileReportTests(unittest.TestCase):
         self.assertEqual(report.status, "FAILED")
         self.assertFalse(report.fix_verified)
         self.assertIn("fix_verified invariants not proven", report.failure_reason)
+
+    def test_replay_false_cannot_produce_pass_and_blocked_must_be_executed(self):
+        snapshot = terminal_snapshot()
+        snapshot["evidence"]["replay_validated"]["executed"] = False
+        report = derive_mobile_report(snapshot)
+        self.assertEqual(report.status, "FAILED")
+        self.assertFalse(report.fix_verified)
+        self.assertFalse(report.replay_executed)
+
+    def test_missing_or_contradictory_replay_fails_closed(self):
+        for change in (lambda evidence: evidence.pop("replay_validated"), lambda evidence: evidence["replay_validated"].update({"decision": "allowed"}), lambda evidence: evidence["replay_validated"].update({"synthetic_event_id": "second-event"})):
+            snapshot = terminal_snapshot()
+            change(snapshot["evidence"])
+            report = derive_mobile_report(snapshot)
+            self.assertEqual(report.status, "FAILED")
+            self.assertFalse(report.fix_verified)
+
+    def test_success_report_does_not_leak_internal_mock_sentinels(self):
+        html = render_mobile_report_html(derive_mobile_report(terminal_snapshot()))
+        self.assertNotIn("policy-1", html)
+        self.assertNotIn("aaaa", html)
+        self.assertNotIn("dddd", html)
+        self.assertIn("send_email=permit", html)
+        self.assertIn("send_email=deny", html)
+        self.assertIn("Replay executed</dt><dd>True", html)
 
     def test_mobile_url_payload_is_deterministic_and_local(self):
         url = build_mobile_report_url("http://127.0.0.1:8123", "mobile-run")

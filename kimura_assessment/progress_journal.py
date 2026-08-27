@@ -95,7 +95,7 @@ def _validate_fix_preconditions(events: list[ProgressEvent], fix_event: Progress
         raise ProgressEventOrderError("fix_verified requires verified replay identity")
     if replay != {
         "decision": "blocked",
-        "executed": False,
+        "executed": True,
         "synthetic_event_id": None,
         "ledger_count": 1,
         "baseline_ledger_count": 1,

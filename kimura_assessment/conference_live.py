@@ -53,7 +53,7 @@ _SCRIPT = r"""
   }
   function fixEvidence(evidence) {
     const baseline = evidence.baseline_validated, remediation = evidence.remediation_verified, identity = evidence.replay_identity_verified, replay = evidence.replay_validated, cleanup = evidence.cleanup_completed;
-    return Boolean(baseline && baseline.decision === "allowed" && baseline.ledger_count === 1 && baseline.event_id && remediation && remediation.policy_id && remediation.policy_digest_before !== remediation.policy_digest_after && identity && identity.fixture_sha256 && identity.action && replay && replay.decision === "blocked" && replay.executed === false && replay.synthetic_event_id === null && replay.ledger_count === 1 && replay.baseline_ledger_count === 1 && cleanup && cleanup.cleanup_attempted === true);
+    return Boolean(baseline && baseline.decision === "allowed" && baseline.ledger_count === 1 && baseline.event_id && remediation && remediation.policy_id && remediation.policy_digest_before !== remediation.policy_digest_after && identity && identity.fixture_sha256 && identity.action && replay && replay.decision === "blocked" && replay.executed === true && replay.synthetic_event_id === null && replay.ledger_count === 1 && replay.baseline_ledger_count === 1 && cleanup && cleanup.cleanup_attempted === true);
   }
   function applySnapshot(value) {
     const next = validSnapshot(value);

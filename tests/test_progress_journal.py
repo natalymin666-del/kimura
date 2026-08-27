@@ -22,11 +22,11 @@ def pass_events(run_id=RUN):
         return ProgressEvent(run_id, sequence, event_type, payload)
     return [
         e(1, ProgressEventType.ASSESSMENT_STARTED, {"assessment_id": "physical-assessment-v1"}),
-        e(2, ProgressEventType.TARGET_VERIFIED, {"target_id": "target-1", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "a" * 64}),
+        e(2, ProgressEventType.TARGET_VERIFIED, {"target_id": "target-1", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "1" * 64}),
         e(3, ProgressEventType.BASELINE_VALIDATED, {"fixture_id": "fixture-1", "fixture_sha256": "b" * 64, "action": "send_email", "decision": "allowed", "event_id": "event-0001", "ledger_count": 1}),
-        e(4, ProgressEventType.REMEDIATION_VERIFIED, {"policy_id": "policy-1", "policy_digest_before": "a" * 64, "policy_digest_after": "c" * 64, "denied_actions": ["send_email"]}),
+        e(4, ProgressEventType.REMEDIATION_VERIFIED, {"policy_id": "physical-remediation-policy-v1", "policy_digest_before": "1" * 64, "policy_digest_after": "3" * 64, "denied_actions": ["send_email"]}),
         e(5, ProgressEventType.REPLAY_IDENTITY_VERIFIED, {"attack_id": "attack-1", "fixture_id": "fixture-1", "fixture_sha256": "b" * 64, "action": "send_email"}),
-        e(6, ProgressEventType.REPLAY_VALIDATED, {"decision": "blocked", "executed": False, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1}),
+        e(6, ProgressEventType.REPLAY_VALIDATED, {"decision": "blocked", "executed": True, "synthetic_event_id": None, "ledger_count": 1, "baseline_ledger_count": 1}),
         e(7, ProgressEventType.CLEANUP_COMPLETED, {"cleanup_attempted": True}),
         e(8, ProgressEventType.FIX_VERIFIED, {"baseline_ledger_count": 1, "final_ledger_count": 1}),
     ]
@@ -80,7 +80,7 @@ class ProgressJournalTests(unittest.TestCase):
     def test_illegal_ordering_and_terminal_overwrite_are_rejected(self):
         journal = ProgressJournal()
         with self.assertRaises(ProgressEventOrderError):
-            journal.append(event(1, ProgressEventType.TARGET_VERIFIED, {"target_id": "target", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "a" * 64}))
+            journal.append(event(1, ProgressEventType.TARGET_VERIFIED, {"target_id": "target", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "1" * 64}))
         for item in pass_events():
             journal.append(item)
         with self.assertRaises(ProgressEventOrderError):
@@ -164,7 +164,7 @@ class ProgressJournalTests(unittest.TestCase):
             terminal = event(3, terminal_type, {"failure_code": "stop", "last_proven_event": "cleanup_completed", "cleanup_completed": True})
             journal.append(terminal)
             with self.assertRaises(ProgressEventOrderError):
-                journal.append(event(4, ProgressEventType.TARGET_VERIFIED, {"target_id": "late", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "a" * 64}))
+                journal.append(event(4, ProgressEventType.TARGET_VERIFIED, {"target_id": "late", "target_kind": "owned-isolated-synthetic-target", "protocol_version": 1, "policy_digest_before": "1" * 64}))
             with self.assertRaises(ProgressEventOrderError):
                 journal.append(event(4, ProgressEventType.FIX_VERIFIED, {"baseline_ledger_count": 1, "final_ledger_count": 1}))
 
