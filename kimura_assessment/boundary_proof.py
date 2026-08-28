@@ -265,7 +265,7 @@ class BoundaryProofCapsule:
             raise ValueError("proof capsule fingerprint mismatch")
 
     def to_unsigned(self) -> dict[str, Any]:
-        return {"safety_contract_fingerprint": self.safety_contract_fingerprint,
+        result = {"safety_contract_fingerprint": self.safety_contract_fingerprint,
                 "boundary_test_pair_fingerprint": self.boundary_test_pair_fingerprint,
                 "scenario_variant_identity": self.scenario_variant_identity,
                 "tool_schema_fingerprint": self.tool_schema_fingerprint,
@@ -283,8 +283,10 @@ class BoundaryProofCapsule:
                 "forbidden_request_fingerprint": self.forbidden_request_fingerprint,
                 "allowed_effect_evidence": dict(self.allowed_effect_evidence or {}),
                 "forbidden_effect_evidence": dict(self.forbidden_effect_evidence or {}),
-                "forbidden_privilege_transition": dict(self.forbidden_privilege_transition or {}),
-                "causal_provenance": dict(self.causal_provenance or {})}
+                "forbidden_privilege_transition": dict(self.forbidden_privilege_transition or {})}
+        if self.causal_provenance is not None:
+            result["causal_provenance"] = dict(self.causal_provenance)
+        return result
 
     @property
     def capsule_id(self) -> str:
