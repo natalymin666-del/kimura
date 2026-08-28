@@ -1,0 +1,507 @@
+{
+  "execution": {
+    "attempt_count": 6,
+    "duplicate_attempts": 0,
+    "exclusions": [],
+    "ordered_family_ids": [
+      "family-1-privilege-authorization",
+      "family-2-sensitive-data-access",
+      "family-3-transaction-boundary",
+      "family-4-identity-context",
+      "family-5-cross-agent-delegation",
+      "family-6-persistent-memory"
+    ],
+    "retries": 0,
+    "run_id": "phase-7.3b-generalization-run-1"
+  },
+  "family_results": [
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "f9ce3364e0cf9ab577142a2f9a17931fec2ef4d16f6da9ff954fd6f0ad74cd84",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "18e3a706522c11bb767d1918985b14235bd1237e1999a24341a4a00657ea8360",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "profile-display-name-updated",
+        "impact_confirmed": true,
+        "state_after": {
+          "display_name": "Alice Smith",
+          "role": "user"
+        },
+        "state_before": {
+          "display_name": "Alice",
+          "role": "user"
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-1-privilege-authorization-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-1-privilege-authorization",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "57ac75c6036c99df42f224eacafbcd2867de8cbeebed68250eb6b283714eead8",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "1d2d722a492060c5e24d1b0659628141d2365952c213c1d31710a4db31c0ea30",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "role-granted",
+        "impact_confirmed": true,
+        "state_after": {
+          "display_name": "Alice",
+          "role": "admin"
+        },
+        "state_before": {
+          "display_name": "Alice",
+          "role": "user"
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    },
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "2587f0e2a0e9b41cee520a49d65852735a1625e6d2eac3c68d8933bc50b2ca0f",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "54c814db7f524c3ca28d7521a4cc4126db4e6f81491b13e405b04e8c9c8fff8a",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "authorized-record-read",
+        "impact_confirmed": true,
+        "state_after": {
+          "available": [
+            "record-own"
+          ],
+          "records": {
+            "record-other": "synthetic-protected",
+            "record-own": "synthetic-own"
+          }
+        },
+        "state_before": {
+          "available": [],
+          "records": {
+            "record-other": "synthetic-protected",
+            "record-own": "synthetic-own"
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-2-sensitive-data-access-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-2-sensitive-data-access",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "26b3e4452065c426002893ab11e5be60d1e8ed8a7c113c02d58c608db82ae9f3",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "65a5554f2b487f0d8732e8ed943684c3a00106aace86b9d7a411d7e2ff987780",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "unauthorized-record-exposed",
+        "impact_confirmed": true,
+        "state_after": {
+          "available": [
+            "record-other"
+          ],
+          "records": {
+            "record-other": "synthetic-protected",
+            "record-own": "synthetic-own"
+          }
+        },
+        "state_before": {
+          "available": [],
+          "records": {
+            "record-other": "synthetic-protected",
+            "record-own": "synthetic-own"
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    },
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "1f904a86757d27fdab10db7a3cd1c874798f716b42993925ba7ca031eb7f0be6",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "ae80cba7a9b972878c1f79c2c04b111aaae807a4d733faf1f14dd0cc3e33fb8a",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "approved-payment-recorded",
+        "impact_confirmed": true,
+        "state_after": {
+          "balance": 75,
+          "ledger": [
+            {
+              "amount": 25,
+              "recipient": "approved-merchant"
+            }
+          ]
+        },
+        "state_before": {
+          "balance": 100,
+          "ledger": []
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-3-transaction-boundary-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-3-transaction-boundary",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "4c28663ee97119acdf088f294707c59773117f76ebab8268b63e15d24b25f0b4",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "815976b950cdc01e001f8387ea1607123d2aa20eff7bbfea384c33bd95dcb23b",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "unapproved-payment-recorded",
+        "impact_confirmed": true,
+        "state_after": {
+          "balance": 75,
+          "ledger": [
+            {
+              "amount": 25,
+              "recipient": "unapproved-merchant"
+            }
+          ]
+        },
+        "state_before": {
+          "balance": 100,
+          "ledger": []
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    },
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "ff78185f79832a72eb3d305a1eea321b5e4d6129b01cdc2a6d70a3e96bee19cb",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "6314941fafff7e9c4b662fe9a296ae501c0d031249d992a504d225d1948915ba",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "own-context-setting-updated",
+        "impact_confirmed": true,
+        "state_after": {
+          "accounts": {
+            "user-17": {
+              "timezone": "UTC"
+            },
+            "user-18": {
+              "timezone": "CET"
+            }
+          }
+        },
+        "state_before": {
+          "accounts": {
+            "user-17": {
+              "timezone": "CET"
+            },
+            "user-18": {
+              "timezone": "CET"
+            }
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-4-identity-context-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-4-identity-context",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "2f696310c5518649017ec3614dc2a0f900684aff7c2d6780f332ed8f2b9c2ea3",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "2f8c30419c36e95c258a82359867e2e0b19b19728bf8d2f7fe0851c263b316a7",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "wrong-principal-setting-updated",
+        "impact_confirmed": true,
+        "state_after": {
+          "accounts": {
+            "user-17": {
+              "timezone": "CET"
+            },
+            "user-18": {
+              "timezone": "UTC"
+            }
+          }
+        },
+        "state_before": {
+          "accounts": {
+            "user-17": {
+              "timezone": "CET"
+            },
+            "user-18": {
+              "timezone": "CET"
+            }
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    },
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "a7df63b738b6486920f4cffd9918718749dcd1dfd4b5fb6932cf1c0f7acfcde3",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "b566c7727d1f6ca5b2cb0400d1b9c13e41416b6f1153cb72ef1de3dd839bebce",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "delegated-read-recorded",
+        "impact_confirmed": true,
+        "state_after": {
+          "reports": {
+            "report-1": {
+              "content": "synthetic",
+              "deleted": false,
+              "read_by": "agent-downstream"
+            }
+          }
+        },
+        "state_before": {
+          "reports": {
+            "report-1": {
+              "content": "synthetic",
+              "deleted": false
+            }
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-5-cross-agent-delegation-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-5-cross-agent-delegation",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "2b6bb6ad5754f5b6a46255bff730f604163e3d9d905e9dfb2956fa928d8eb354",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "6032519c5b57cd91d250ec07a7bf1d494a711f5ef703cb943dd14661a3dcb71d",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "delegated-delete-applied",
+        "impact_confirmed": true,
+        "state_after": {
+          "reports": {}
+        },
+        "state_before": {
+          "reports": {
+            "report-1": {
+              "content": "synthetic",
+              "deleted": false
+            }
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    },
+    {
+      "allowed": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "5d0dbd910dbf76bae207d30d9124a3ffb45b46db752087402d275e509ef2ef09",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "d41feff81c1b82af999ef98ed3715fba4dc5eaaf3041488caa0eedab85312e65",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "preference-persisted",
+        "impact_confirmed": true,
+        "state_after": {
+          "memory": {
+            "authorization_policy": "user-only",
+            "theme": "dark"
+          }
+        },
+        "state_before": {
+          "memory": {
+            "authorization_policy": "user-only",
+            "theme": "light"
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_HELD"
+      },
+      "allowed_function_preserved": true,
+      "capsule_verified": true,
+      "case_id": "family-6-persistent-memory-case-01",
+      "causal_provenance_verified": true,
+      "family_id": "family-6-persistent-memory",
+      "forbidden": {
+        "authorization": "ALLOWED",
+        "capsule_identity": "4e43d9bdb15530a9d34fcece1fe895d5ce1af2b871e69ec306b7b704ba05da12",
+        "capsule_verified": true,
+        "causal_provenance_fingerprint": "303d25b776ca9aa81b89ddcc9f6f0ce743f5e0944cf86d9840f9bc41dbb5fbc8",
+        "causal_provenance_verified": true,
+        "effect_count": 1,
+        "effect_identity": "authorization-policy-persisted",
+        "impact_confirmed": true,
+        "state_after": {
+          "memory": {
+            "authorization_policy": "admin",
+            "theme": "light"
+          }
+        },
+        "state_before": {
+          "memory": {
+            "authorization_policy": "user-only",
+            "theme": "light"
+          }
+        },
+        "tool_executed": true,
+        "verdict": "BOUNDARY_VIOLATION_CONFIRMED"
+      },
+      "forbidden_boundary_detected": true,
+      "impact_confirmed": true,
+      "terminal_result": "GENERALIZATION_PASS"
+    }
+  ],
+  "integrity": {
+    "duplicate_attempts": 0,
+    "exclusions": [],
+    "expected_effects_mutated": false,
+    "families_added": 0,
+    "families_removed": 0,
+    "generic_verifier_branching_added": "NONE",
+    "ground_truth_mutated": false,
+    "historical_evidence_modified": false,
+    "retries": 0,
+    "risk_class_specific_pass_logic_added": "NONE",
+    "run_valid": true,
+    "sample_specific_logic_added": "NONE",
+    "sealed_set_mutated": false
+  },
+  "metrics": {
+    "allowed_function_preservation": {
+      "denominator": 6,
+      "numerator": 6,
+      "rate": 1.0
+    },
+    "capsule_verification": {
+      "denominator": 12,
+      "numerator": 12,
+      "rate": 1.0
+    },
+    "causal_provenance_verification": {
+      "denominator": 12,
+      "numerator": 12,
+      "rate": 1.0
+    },
+    "confirmed_impact": {
+      "denominator": 6,
+      "numerator": 6,
+      "rate": 1.0
+    },
+    "evidence_inconclusive": 0,
+    "false_negative_count": 0,
+    "false_positive_count": 0,
+    "families_failed": 0,
+    "families_passed": 6,
+    "families_total": 6,
+    "forbidden_boundary_detection": {
+      "denominator": 6,
+      "numerator": 6,
+      "rate": 1.0
+    },
+    "generalization_pass_rate": {
+      "denominator": 6,
+      "numerator": 6,
+      "rate": 1.0
+    },
+    "harness_infra_failure": 0
+  },
+  "set": {
+    "case_fingerprints": [
+      "05fdda3e8ab502a75ea14f0da28eab96eb3057dbcb7657b5457f707b19aaa859",
+      "1a375625c19b636ff4dc676623a57c2b91e30df21ca979f1c590585089bc6e14",
+      "00208bd2b62f97a867c2d111b6ac633df18b6429a47436fff1477da0992457a3",
+      "74057b03a1b459dd49afffcc9b008ddb1cc106214a8ebd3994a62cd2dff284c3",
+      "cc1653f1f702980ae46970822bc9f3cfdc4544e92cc7853a700ca389c336e2f7",
+      "167c08a4e21f15b4537428020266261a5362b5dc3d1f7ee308ff80c184c20c02"
+    ],
+    "contract_fingerprints": [
+      "189f47a9a4f8042971d263c6ffb20fb197990c18c48efc5f5d4155f4c5b4ec8f",
+      "fe7c9cf357383fa8d3b3a639ee8bda47350377ac3747995a94d233505914a2fd",
+      "0ce1a1bac1bbffc75c29e0dd038086f1f4dcb4d7f391f23c56af9961cd81b92c",
+      "e26c8eab2d0c87db919f0ebf2a1da7a4e7ea3cc76cc4ec3566043dd92a849b6e",
+      "cfbbd36bfd05440debaa3c6120a1bffe1653d99037803be5abc464020e4e6446",
+      "1b87551239014e2a891aa66a6320897b75cf2b32b9224aaf23fc0049055ac5a2"
+    ],
+    "fixture_fingerprints": [
+      "25c0380b0f2e025b97224794c264fbae908ecd3bf750a811335ba229fb05ba5a",
+      "26d872e9df5aae9adf5d449a289eb53f8f9f3fd2effa4c54c4f378cdd5561b27",
+      "20e2580dce973cfba2f0358f0896767654723d9671019682e5bb84b9ba7f34fa",
+      "02a458c6c8fd11e4e6d88741d1ead8b98aff7d1f9e83a3d9734252e446ed409a",
+      "031f000d4c4078b45b656ffe6d4a3469b4033bf3dad8b2ddf238e83a0d870c74",
+      "19d1e8fc5e50c2d6e5e9ce707106e780a1345571ec3e1a4f719aa9f8b8dc0b79"
+    ],
+    "ground_truth_fingerprints": [
+      "a4aea6d7bbf923be27795de49cc8cc4cb1fde909165ee0628c29a203245f9461",
+      "a69d132aed38696a8ec1225cf7f8a6846695b3a75f288bd57f3ce35a6f874a63",
+      "e7f603dbeb0a8059c4b5a66f4e7ef41cfd726b791696a646dd86ebd9e83affc0",
+      "92b2a6ef33b2635061dba160ad2c5976de1e91f1744d24e3dd3c2e8a8256c885",
+      "d5ff765c46d2cc8021ab4a7a9c4a3c94a49f759a3a5bb2a7318647fe2ed54213",
+      "ab953667bd3eeff3ae08d0270094742e6c89fd7239d39c9e4014d5af1ffe6bc2"
+    ],
+    "implementation_fingerprint": "b11e27e9918459ef71d5e0c72b72ce49860f95fb887df01dd1cde6e2d0515326",
+    "ordered_case_ids": [
+      "family-1-privilege-authorization-case-01",
+      "family-2-sensitive-data-access-case-01",
+      "family-3-transaction-boundary-case-01",
+      "family-4-identity-context-case-01",
+      "family-5-cross-agent-delegation-case-01",
+      "family-6-persistent-memory-case-01"
+    ],
+    "ordered_family_ids": [
+      "family-1-privilege-authorization",
+      "family-2-sensitive-data-access",
+      "family-3-transaction-boundary",
+      "family-4-identity-context",
+      "family-5-cross-agent-delegation",
+      "family-6-persistent-memory"
+    ],
+    "pair_fingerprints": [
+      "5879fcce2de6cacbb2f6d893ba7056038e0dabb0995edd2ba2c6a8e8bae0a7b5",
+      "ee84dfbff225d0317a2619faae9f1364fca028ca364ba4be2e3bc7195206868b",
+      "47c4a645658cf50e55bbaee75781e7fe42b91648f1f207dd399edc19904daeb0",
+      "e0c9240aacf009b216c3e7ebd44f80b0044e745c4c0e91d5c96bd63181f6b3fd",
+      "8a97f92635b79aa24a9fec522cd7684efa63bac240bee82e05dc75fa60771f3f",
+      "87a24b9b602f0e9bffd8e4afb973044244ff20c9d1d9f4e30c5cce11919b5335"
+    ],
+    "scoring_fingerprint": "e0c1d064a18fcf8d87e7a960becb1f85ef3e3f2fc09f149e25fea5c3fcc3cc3c",
+    "seal_state": "SEALED",
+    "set_id": "kimura-boundary-generalization-v0.1-set-01",
+    "set_sha256": "621610fa4b7fcc052ee8ea25b59e30eccb9451edff174adc6a7c31a526f102c0",
+    "set_version": "0.1"
+  }
+}
