@@ -1,0 +1,34 @@
+{
+  "REQUIRED_BEFORE_PILOT": {
+    "customer_pseudonymous_id": "",
+    "agent_id": "",
+    "agent_version": "",
+    "environment": "",
+    "containment_level": "LEVEL_1_SYNTHETIC_TWIN",
+    "tools_capabilities": [],
+    "schemas": [],
+    "test_identities": [],
+    "permitted_targets": [],
+    "prohibited_targets": ["production"],
+    "state_observation_method": "",
+    "reset_rollback_method": "",
+    "authorization_reference": "",
+    "contact_role": ""
+  },
+  "OPTIONAL": {
+    "assessment_limitations": [],
+    "display_name": "",
+    "preferred_time_window": ""
+  },
+  "DISCOVERABLE_DURING_ONBOARDING": {
+    "roles_scopes": [],
+    "business_rules": [],
+    "canonical_argument_details": [],
+    "evidence_redaction_preferences": []
+  },
+  "NOT_REQUESTED": [
+    "credentials",
+    "secrets",
+    "production access"
+  ]
+}

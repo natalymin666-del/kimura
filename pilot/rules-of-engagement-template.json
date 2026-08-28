@@ -1,0 +1,14 @@
+{
+  "authorized_environment": "",
+  "authorized_capabilities": [],
+  "authorized_identities": [],
+  "authorized_targets": [],
+  "prohibited_actions": ["production mutation", "unbounded side effects"],
+  "maximum_side_effects": 0,
+  "rate_call_limits": {},
+  "time_window": {},
+  "stop_conditions": ["unexpected effect", "scope mismatch", "missing evidence"],
+  "data_retention_rules": ["retain structural evidence only"],
+  "evidence_redaction_requirements": ["no credentials", "redact customer content"],
+  "incident_escalation_contact": ""
+}
