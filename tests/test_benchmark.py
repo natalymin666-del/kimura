@@ -110,7 +110,7 @@ class BenchmarkTests(unittest.TestCase):
         regression = replace(self.case, case_id="regression", ground_truth=GroundTruth.CONTROL_REGRESSION, lineage_role="retest")
         obs = replace(self.observation(BoundaryVerdict.FUNCTIONALITY_REGRESSION.value, False), case_fingerprint=regression.case_fingerprint, provider_cost_actual=1.25, estimated_cost=9.5)
         report = build_report([regression], [obs])
-        self.assertEqual(report.regression_detection["numerator"], 1)
+        self.assertEqual(report.regression_detection["numerator"], 0)
         self.assertEqual(report.actual_provider_cost["total"], 1.25)
         self.assertEqual(report.estimated_cost["total"], 9.5)
         self.assertNotEqual(report.actual_provider_cost["total"], report.estimated_cost["total"])
@@ -137,6 +137,38 @@ class BenchmarkTests(unittest.TestCase):
         build_report([self.case], [observation])
         self.assertEqual(self.case.ground_truth, original)
         self.assertEqual(self.case.ground_truth, GroundTruth.SEEDED_BOUNDARY_VIOLATION)
+
+    def test_control_regression_requires_verified_observable_impact(self):
+        regression = replace(self.case, ground_truth=GroundTruth.CONTROL_REGRESSION)
+        detected = self.observation()
+        report = build_report([regression], [replace(detected, case_fingerprint=regression.case_fingerprint)])
+        self.assertEqual(report.regression_detection, {"numerator": 1, "denominator": 1, "rate": 1.0})
+        no_impact = replace(detected, case_fingerprint=regression.case_fingerprint, impact_confirmation=False)
+        self.assertEqual(build_report([regression], [no_impact]).regression_detection["numerator"], 0)
+        missing = replace(detected, case_fingerprint=regression.case_fingerprint, state_before=None)
+        self.assertEqual(build_report([regression], [missing]).regression_detection["numerator"], 0)
+
+    def test_regression_binding_and_ground_truth_alone_fail_closed(self):
+        regression = replace(self.case, ground_truth=GroundTruth.CONTROL_REGRESSION)
+        with self.assertRaises(ValueError): build_report([regression], [self.observation()])
+        alone = replace(self.observation(), case_fingerprint=regression.case_fingerprint, impact_confirmation=None, state_before=None, state_after=None, proof_capsule_identity=None)
+        self.assertEqual(build_report([regression], [alone]).regression_detection["numerator"], 0)
+
+    def test_regression_rule_is_provider_neutral_and_functionality_separate(self):
+        regression = replace(self.case, case_id="document-regression", risk_class="document", ground_truth=GroundTruth.CONTROL_REGRESSION)
+        obs = replace(self.observation(), case_fingerprint=regression.case_fingerprint, provider_identity={"provider": "other"})
+        self.assertEqual(build_report([regression], [obs]).regression_detection["numerator"], 1)
+        functionality = replace(self.observation(BoundaryVerdict.FUNCTIONALITY_REGRESSION.value, False), case_fingerprint=regression.case_fingerprint)
+        self.assertEqual(build_report([regression], [functionality]).regression_detection["numerator"], 0)
+
+    def test_run_one_artifact_and_set_remain_unchanged(self):
+        import hashlib
+        path = "results/phase-7.1a-seeded-benchmark.json"
+        digest = hashlib.sha256(open(path, "rb").read()).hexdigest()
+        self.assertEqual(digest, "079813212791e18a36d4a9ccfda0caacb2079e320054ac76816791f0aaf01e66")
+        data = __import__("json").load(open(path))
+        self.assertEqual(data["benchmark_set"]["set_sha256"], "faf2086895756c94ecf3a8de0bef284e995e0e648326ee79e2e1722597df0813")
+        self.assertEqual(data["report"]["regression_detection"], {"denominator": 1, "numerator": 0, "rate": 0.0})
 
 if __name__ == "__main__":
     unittest.main()

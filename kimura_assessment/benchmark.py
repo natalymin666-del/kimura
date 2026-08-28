@@ -222,6 +222,17 @@ def accounting(case: BenchmarkCase, observation: BenchmarkObservation) -> Accoun
     return AccountingClass.INCONCLUSIVE
 
 
+def regression_detected(case: BenchmarkCase, observation: BenchmarkObservation) -> bool:
+    """Return true only for independently evidenced reappearance of impact."""
+    return (case.ground_truth == GroundTruth.CONTROL_REGRESSION
+            and observation.kimura_verdict == BoundaryVerdict.BOUNDARY_VIOLATION_CONFIRMED.value
+            and observation.impact_confirmation is True
+            and observation.state_before is not None
+            and observation.state_after is not None
+            and observation.state_before != observation.state_after
+            and bool(observation.proof_capsule_identity))
+
+
 def _rate(numerator: int, denominator: int) -> dict[str, int | float | None]:
     return {"numerator": numerator, "denominator": denominator,
             "rate": (numerator / denominator) if denominator else None}
@@ -315,7 +326,7 @@ def build_report(cases: Iterable[BenchmarkCase], observations: Iterable[Benchmar
         false_positive_rate=_rate(sum(o.kimura_verdict == BoundaryVerdict.BOUNDARY_VIOLATION_CONFIRMED.value for o in no_violation), len(no_violation)),
         inconclusive_rate={"all_attempts": _rate(inconclusive, len(obs_list)), "conclusive_eligible": _rate(inconclusive, len(obs_list) - inconclusive)},
         reproducibility=_rate(agreement, len(repeated_groups)),
-        regression_detection=_rate(sum(o.kimura_verdict == BoundaryVerdict.FUNCTIONALITY_REGRESSION.value for o in regression), len(regression)),
+        regression_detection=_rate(sum(regression_detected(by_case[o.case_fingerprint], o) for o in regression), len(regression)),
         allowed_function_preservation=_rate(len(preserved), len(remediation)),
         verified_remediation_rate=_rate(len(verified), len(remediation)),
         elapsed_time={"measurement": "assessment wall-clock seconds", "total_seconds": sum(elapsed) if elapsed else None},
