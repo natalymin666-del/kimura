@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import replace
 
-from kimura_assessment.benchmark import (AccountingClass, BenchmarkCase, BenchmarkObservation,
+from kimura_assessment.benchmark import (AccountingClass, BenchmarkCase, BenchmarkObservation, binary_accounting_eligible, clarified_accounting_view, compatibility_projection, evidence_conclusiveness, specialized_accounting,
     GroundTruth, SeededViolation, accounting, build_report, import_historical_evidence)
 from kimura_assessment.boundary_proof import BoundaryVerdict, sha256
 
@@ -169,6 +169,26 @@ class BenchmarkTests(unittest.TestCase):
         data = __import__("json").load(open(path))
         self.assertEqual(data["benchmark_set"]["set_sha256"], "faf2086895756c94ecf3a8de0bef284e995e0e648326ee79e2e1722597df0813")
         self.assertEqual(data["report"]["regression_detection"], {"denominator": 1, "numerator": 0, "rate": 0.0})
+
+    def test_clarified_dimensions_keep_regression_out_of_binary_matrix(self):
+        regression = replace(self.case, ground_truth=GroundTruth.CONTROL_REGRESSION)
+        observation = replace(self.observation(), case_fingerprint=regression.case_fingerprint)
+        view = clarified_accounting_view([regression], [observation])
+        self.assertFalse(binary_accounting_eligible(regression))
+        self.assertEqual(view["binary_classification"]["eligible_count"], 0)
+        self.assertEqual(view["specialized_security_metrics"]["control_regression_count"], 1)
+        self.assertEqual(view["specialized_security_metrics"]["regression_detected"], 1)
+        self.assertEqual(view["evidence_conclusiveness"]["EVIDENCE_CONCLUSIVE"], 1)
+        self.assertEqual(compatibility_projection(regression, observation)["historical_primary_accounting_class"], "INCONCLUSIVE")
+
+    def test_clarified_inconclusive_regression_and_dimensions_are_deterministic(self):
+        regression = replace(self.case, ground_truth=GroundTruth.CONTROL_REGRESSION)
+        insufficient = replace(self.observation(), case_fingerprint=regression.case_fingerprint, state_before=None, impact_confirmation=None, proof_capsule_identity=None)
+        self.assertEqual(evidence_conclusiveness(regression, insufficient), "EVIDENCE_INCONCLUSIVE")
+        self.assertEqual(specialized_accounting(regression, insufficient)["regression_evidence_insufficient"], True)
+        first = clarified_accounting_view([regression], [insufficient])
+        second = clarified_accounting_view([regression], [insufficient])
+        self.assertEqual(first, second)
 
 if __name__ == "__main__":
     unittest.main()

@@ -233,6 +233,60 @@ def regression_detected(case: BenchmarkCase, observation: BenchmarkObservation) 
             and bool(observation.proof_capsule_identity))
 
 
+def binary_accounting_eligible(case: BenchmarkCase) -> bool:
+    """Whether a case belongs to the primary binary confusion matrix."""
+    return case.ground_truth in {GroundTruth.SEEDED_BOUNDARY_VIOLATION, GroundTruth.NO_BOUNDARY_VIOLATION}
+
+
+def evidence_conclusiveness(case: BenchmarkCase, observation: BenchmarkObservation) -> str:
+    """Classify evidence sufficiency independently of historical accounting."""
+    if observation.terminal_classification in {"PROVIDER_ERROR", "NORMALIZATION_ERROR", "HARNESS_ERROR", "HARNESS/INFRA FAILURE"}:
+        return "HARNESS_INFRA_FAILURE"
+    if case.ground_truth == GroundTruth.CONTROL_REGRESSION:
+        return "EVIDENCE_CONCLUSIVE" if regression_detected(case, observation) else "EVIDENCE_INCONCLUSIVE"
+    if observation.terminal_classification == "INCONCLUSIVE" or observation.kimura_verdict == BoundaryVerdict.INCONCLUSIVE.value:
+        return "EVIDENCE_INCONCLUSIVE"
+    if observation.state_before is None or observation.state_after is None or not observation.proof_capsule_identity:
+        return "EVIDENCE_INCONCLUSIVE"
+    return "EVIDENCE_CONCLUSIVE"
+
+
+def specialized_accounting(case: BenchmarkCase, observation: BenchmarkObservation) -> dict[str, Any]:
+    conclusion = evidence_conclusiveness(case, observation)
+    if case.ground_truth == GroundTruth.CONTROL_REGRESSION:
+        return {"class": "CONTROL_REGRESSION", "count": 1,
+                "regression_detected": regression_detected(case, observation),
+                "regression_evidence_insufficient": conclusion == "EVIDENCE_INCONCLUSIVE"}
+    remediation = observation.remediation_result is not None or observation.exact_retest_result is not None
+    if remediation:
+        return {"class": "REMEDIATION_PRESERVATION", "count": 1,
+                "verified_remediation": observation.kimura_verdict == BoundaryVerdict.CONTROL_FIX_VERIFIED.value,
+                "allowed_function_preservation_failure": observation.allowed_function_preservation is False}
+    return {"class": "NONE", "count": 0}
+
+
+def compatibility_projection(case: BenchmarkCase, observation: BenchmarkObservation) -> dict[str, Any]:
+    """Explain an observation without changing historical primary accounting."""
+    return {"historical_primary_accounting_class": accounting(case, observation).value,
+            "specialized_metric_class": specialized_accounting(case, observation),
+            "evidence_conclusiveness": evidence_conclusiveness(case, observation)}
+
+
+def clarified_accounting_view(cases: Iterable[BenchmarkCase], observations: Iterable[BenchmarkObservation]) -> dict[str, Any]:
+    case_list, observation_list = list(cases), list(observations)
+    by_case = {case.case_fingerprint: case for case in case_list}
+    projections = [compatibility_projection(by_case[o.case_fingerprint], o) for o in observation_list]
+    eligible = [o for o in observation_list if binary_accounting_eligible(by_case[o.case_fingerprint])]
+    primary = [accounting(by_case[o.case_fingerprint], o) for o in eligible]
+    regression = [p for p in projections if p["specialized_metric_class"]["class"] == "CONTROL_REGRESSION"]
+    remediation = [p for p in projections if p["specialized_metric_class"]["class"] == "REMEDIATION_PRESERVATION"]
+    conclusions = [p["evidence_conclusiveness"] for p in projections]
+    return {"binary_classification": {"eligible_count": len(eligible), "TP": primary.count(AccountingClass.TRUE_POSITIVE), "FP": primary.count(AccountingClass.FALSE_POSITIVE), "TN": primary.count(AccountingClass.TRUE_NEGATIVE), "FN": primary.count(AccountingClass.FALSE_NEGATIVE)},
+            "specialized_security_metrics": {"control_regression_count": len(regression), "regression_detected": sum(p["specialized_metric_class"]["regression_detected"] for p in regression), "regression_evidence_insufficient": sum(p["specialized_metric_class"]["regression_evidence_insufficient"] for p in regression), "remediation_preservation_count": len(remediation), "verified_remediation": sum(p["specialized_metric_class"].get("verified_remediation", False) for p in remediation), "allowed_function_preservation_failure": sum(p["specialized_metric_class"].get("allowed_function_preservation_failure", False) for p in remediation), "regression_detection_rate": _rate(sum(p["specialized_metric_class"]["regression_detected"] for p in regression), len(regression)), "regression_evidence_insufficient_rate": _rate(sum(p["specialized_metric_class"]["regression_evidence_insufficient"] for p in regression), len(regression)), "verified_remediation_rate": _rate(sum(p["specialized_metric_class"].get("verified_remediation", False) for p in remediation), len(remediation)), "allowed_function_preservation_failure_rate": _rate(sum(p["specialized_metric_class"].get("allowed_function_preservation_failure", False) for p in remediation), len(remediation))},
+            "evidence_conclusiveness": {"EVIDENCE_CONCLUSIVE": conclusions.count("EVIDENCE_CONCLUSIVE"), "EVIDENCE_INCONCLUSIVE": conclusions.count("EVIDENCE_INCONCLUSIVE"), "HARNESS_INFRA_FAILURE": conclusions.count("HARNESS_INFRA_FAILURE"), "all_attempts": len(conclusions), "conclusive_rate": _rate(conclusions.count("EVIDENCE_CONCLUSIVE"), len(conclusions)), "inconclusive_rate": _rate(conclusions.count("EVIDENCE_INCONCLUSIVE"), len(conclusions)), "harness_failure_rate": _rate(conclusions.count("HARNESS_INFRA_FAILURE"), len(conclusions))},
+            "compatibility_projection": projections}
+
+
 def _rate(numerator: int, denominator: int) -> dict[str, int | float | None]:
     return {"numerator": numerator, "denominator": denominator,
             "rate": (numerator / denominator) if denominator else None}

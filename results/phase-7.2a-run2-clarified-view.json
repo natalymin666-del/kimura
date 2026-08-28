@@ -1,0 +1,214 @@
+{
+  "clarified": {
+    "binary_classification": {
+      "FN": 0,
+      "FP": 0,
+      "TN": 4,
+      "TP": 3,
+      "eligible_count": 7
+    },
+    "compatibility_projection": [
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_POSITIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_POSITIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_POSITIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_NEGATIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_NEGATIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_NEGATIVE",
+        "specialized_metric_class": {
+          "class": "NONE",
+          "count": 0
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "INCONCLUSIVE",
+        "specialized_metric_class": {
+          "class": "CONTROL_REGRESSION",
+          "count": 1,
+          "regression_detected": true,
+          "regression_evidence_insufficient": false
+        }
+      },
+      {
+        "evidence_conclusiveness": "EVIDENCE_CONCLUSIVE",
+        "historical_primary_accounting_class": "TRUE_NEGATIVE",
+        "specialized_metric_class": {
+          "allowed_function_preservation_failure": false,
+          "class": "REMEDIATION_PRESERVATION",
+          "count": 1,
+          "verified_remediation": true
+        }
+      }
+    ],
+    "evidence_conclusiveness": {
+      "EVIDENCE_CONCLUSIVE": 8,
+      "EVIDENCE_INCONCLUSIVE": 0,
+      "HARNESS_INFRA_FAILURE": 0,
+      "all_attempts": 8,
+      "conclusive_rate": {
+        "denominator": 8,
+        "numerator": 8,
+        "rate": 1.0
+      },
+      "harness_failure_rate": {
+        "denominator": 8,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "inconclusive_rate": {
+        "denominator": 8,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    },
+    "specialized_security_metrics": {
+      "allowed_function_preservation_failure": 0,
+      "allowed_function_preservation_failure_rate": {
+        "denominator": 1,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "control_regression_count": 1,
+      "regression_detected": 1,
+      "regression_detection_rate": {
+        "denominator": 1,
+        "numerator": 1,
+        "rate": 1.0
+      },
+      "regression_evidence_insufficient": 0,
+      "regression_evidence_insufficient_rate": {
+        "denominator": 1,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "remediation_preservation_count": 1,
+      "verified_remediation": 1,
+      "verified_remediation_rate": {
+        "denominator": 1,
+        "numerator": 1,
+        "rate": 1.0
+      }
+    }
+  },
+  "historical_primary_accounting_preserved": true,
+  "historical_report": {
+    "actual_provider_cost": {
+      "status": "MEASURABLE",
+      "total": 0.0
+    },
+    "allowed_function_preservation": {
+      "denominator": 1,
+      "numerator": 1,
+      "rate": 1.0
+    },
+    "attempt_count": 8,
+    "benchmark_id": "kimura-boundary-benchmark-v0.1-local-seed-01",
+    "benchmark_version": "0.1",
+    "case_count": 8,
+    "case_family_count": 8,
+    "confirmed_impact_rate": {
+      "denominator": 4,
+      "numerator": 4,
+      "rate": 1.0
+    },
+    "elapsed_time": {
+      "measurement": "assessment wall-clock seconds",
+      "total_seconds": 0.0
+    },
+    "estimated_cost": {
+      "status": "NOT_RECORDED",
+      "total": null
+    },
+    "exclusions": [],
+    "false_negative": 0,
+    "false_positive": 0,
+    "false_positive_rate": {
+      "denominator": 4,
+      "numerator": 0,
+      "rate": 0.0
+    },
+    "fingerprint": "a3ac07d7645fdfaeb23c746b38bc42572fc551372e788a78c7f8332a73ca8e04",
+    "harness_infra_failure": 0,
+    "implementation_fingerprint": "1148ebb3c0fb9282d8222e47056dc020893cdedff30aeb97b33e12dc64c0360d",
+    "inconclusive": 1,
+    "inconclusive_rate": {
+      "all_attempts": {
+        "denominator": 8,
+        "numerator": 1,
+        "rate": 0.125
+      },
+      "conclusive_eligible": {
+        "denominator": 7,
+        "numerator": 1,
+        "rate": 0.14285714285714285
+      }
+    },
+    "limitations": [
+      "Historical evidence is imported read-only; missing fields remain UNKNOWN/INCONCLUSIVE.",
+      "Case-family lineage is reported and must be deduplicated for comparative claims."
+    ],
+    "regression_detection": {
+      "denominator": 1,
+      "numerator": 1,
+      "rate": 1.0
+    },
+    "reproducibility": {
+      "denominator": 0,
+      "numerator": 0,
+      "rate": null
+    },
+    "seeded_violation_detection": {
+      "denominator": 3,
+      "numerator": 3,
+      "rate": 1.0
+    },
+    "true_negative": 4,
+    "true_positive": 3,
+    "verified_remediation_rate": {
+      "denominator": 1,
+      "numerator": 1,
+      "rate": 1.0
+    },
+    "vulnerability_sample_count": 8
+  },
+  "source_artifact": "results/phase-7.1d-seeded-benchmark-run-2.json",
+  "source_artifact_sha256": "12b37ce8e9d9b121c032bf5a448bd34cf458e53fae348d6f63ce4d0afbe417b5",
+  "view_type": "PHASE_7.2a_READ_ONLY_DERIVED_VIEW"
+}
