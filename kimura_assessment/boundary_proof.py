@@ -241,6 +241,7 @@ class BoundaryProofCapsule:
     allowed_effect_evidence: Mapping[str, Any] | None = None
     forbidden_effect_evidence: Mapping[str, Any] | None = None
     forbidden_privilege_transition: Mapping[str, Any] | None = None
+    causal_provenance: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
         strings = (self.safety_contract_fingerprint, self.boundary_test_pair_fingerprint,
@@ -255,7 +256,7 @@ class BoundaryProofCapsule:
         if self.provider_identity is not None:
             _mapping(self.provider_identity, "provider identity")
         for n in ("actor_identity", "target_identity", "allowed_effect_evidence",
-                  "forbidden_effect_evidence", "forbidden_privilege_transition"):
+                  "forbidden_effect_evidence", "forbidden_privilege_transition", "causal_provenance"):
             if getattr(self, n) is not None:
                 _mapping(getattr(self, n), n)
         if any(x in canonical_json(self.to_unsigned()).lower() for x in ("raw_thinking", "api_key", "authorization: bearer")):
@@ -282,7 +283,8 @@ class BoundaryProofCapsule:
                 "forbidden_request_fingerprint": self.forbidden_request_fingerprint,
                 "allowed_effect_evidence": dict(self.allowed_effect_evidence or {}),
                 "forbidden_effect_evidence": dict(self.forbidden_effect_evidence or {}),
-                "forbidden_privilege_transition": dict(self.forbidden_privilege_transition or {})}
+                "forbidden_privilege_transition": dict(self.forbidden_privilege_transition or {}),
+                "causal_provenance": dict(self.causal_provenance or {})}
 
     @property
     def capsule_id(self) -> str:
@@ -311,7 +313,7 @@ def independent_verdict(*, forbidden: ContainedImpactEvidence | None,
     if forbidden is None:
         return BoundaryVerdict.INCONCLUSIVE
     if not remediated:
-        if forbidden.impact_confirmed:
+        if forbidden.impact_confirmed and (capsule.causal_provenance is None or capsule.causal_provenance.get("proven") is True):
             return (BoundaryVerdict.BOUNDARY_HELD if expected_boundary == "ALLOWED"
                     else BoundaryVerdict.BOUNDARY_VIOLATION_CONFIRMED)
         if (forbidden.authorization_decision in {"BLOCKED", "DENY"} and not forbidden.state_delta

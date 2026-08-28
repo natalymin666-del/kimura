@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping, Protocol
 
+from .causal_provenance import prove_causal_provenance
 from .boundary_proof import (BoundaryProofCapsule, BoundaryTestPair, BoundaryVerdict,
     ContainedImpactEvidence, SafetyContract, independent_verdict, sha256)
 from .privilege_boundary import (ACTOR, CAPABILITY_SCHEMA, FIXTURE_ID, INITIAL_STATE,
@@ -131,8 +132,12 @@ def execute_real_agent_boundary(*, contract: SafetyContract, pair: BoundaryTestP
     evidence = SyntheticAccountEnvironment(INITIAL_STATE).execute_vulnerable(request.arguments)
     if not vulnerable:
         evidence = ContainedImpactEvidence(evidence.state_before, evidence.attempted_action, "BLOCKED", {"executed": False}, evidence.state_before, "", 0)
-    verdict = independent_verdict(forbidden=evidence, capsule=build_privilege_proof_capsule(contract, pair, evidence, evidence),
-                                  expected_boundary="ALLOWED" if twin_identity == "ALLOWED" else "FORBIDDEN")
+    authorization_evidence = {"decision": evidence.authorization_decision, "tool_call_id": request.tool_call_id}
+    execution_evidence = {"executed": evidence.tool_execution.get("executed"), "tool_call_id": request.tool_call_id}
+    causal = prove_causal_provenance(request=dict(request.arguments), authorization=authorization_evidence,
+        execution=execution_evidence, effect={"effect_identity": evidence.effect_identity, "effect_count": evidence.effect_count},
+        state_transition={"state_before": evidence.state_before, "state_after": evidence.state_after},
+        run_identity={"run_id": run_id, "experiment_id": experiment_id}, fixture_identity=FIXTURE_ID, twin_identity=twin_identity)
     capsule = BoundaryProofCapsule(contract.fingerprint, pair.fingerprint, f"real-agent/{twin_identity.lower()}",
         sha256([CAPABILITY_SCHEMA]), dict(request.arguments), FIXTURE_ID, evidence.state_before,
         {"decision": evidence.authorization_decision, "response_id": observation.response_id, "tool_call_id": request.tool_call_id},
@@ -142,7 +147,10 @@ def execute_real_agent_boundary(*, contract: SafetyContract, pair: BoundaryTestP
         actor_identity=ACTOR, target_identity={"user_id": "user-17"}, initial_state_fingerprint=sha256(INITIAL_STATE),
         allowed_request_fingerprint=sha256(pair.allowed_twin.canonical_request), forbidden_request_fingerprint=sha256(pair.forbidden_twin.canonical_request),
         allowed_effect_evidence=evidence.to_dict() if twin_identity == "ALLOWED" else None,
-        forbidden_effect_evidence=evidence.to_dict() if twin_identity == "FORBIDDEN" else None)
+        forbidden_effect_evidence=evidence.to_dict() if twin_identity == "FORBIDDEN" else None,
+        causal_provenance=causal.to_dict())
+    verdict = independent_verdict(forbidden=evidence, capsule=capsule,
+        expected_boundary="ALLOWED" if twin_identity == "ALLOWED" else "FORBIDDEN")
     return _base_run(contract, pair, twin, run_id, experiment_id, provider, ModelOutcome.MODEL_REQUESTED_BOUNDARY_ACTION, verdict, capsule)
 
 
