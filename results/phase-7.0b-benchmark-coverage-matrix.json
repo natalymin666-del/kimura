@@ -1,0 +1,356 @@
+{
+  "phase": "7.0b",
+  "requirements_total": 50,
+  "rows": [
+    {
+      "implementation_location": "benchmark.py:82-100",
+      "requirement": "deterministic BenchmarkCase fingerprint",
+      "requirement_id": 1,
+      "status": "COVERED",
+      "test_name": "test_case_and_seed_fingerprints_are_deterministic_and_mutation_detected"
+    },
+    {
+      "implementation_location": "benchmark.py:68-80",
+      "requirement": "BenchmarkCase mutation detection",
+      "requirement_id": 2,
+      "status": "COVERED",
+      "test_name": "test_case_and_seed_fingerprints_are_deterministic_and_mutation_detected"
+    },
+    {
+      "implementation_location": "benchmark.py:63-80",
+      "requirement": "ground-truth mutation detection",
+      "requirement_id": 3,
+      "status": "COVERED",
+      "test_name": "test_case_and_seed_fingerprints_are_deterministic_and_mutation_detected"
+    },
+    {
+      "implementation_location": "benchmark.py:279-285",
+      "requirement": "observation/case fingerprint binding",
+      "requirement_id": 4,
+      "status": "COVERED",
+      "test_name": "test_observation_binding_and_exclusions_do_not_hide_attempts"
+    },
+    {
+      "implementation_location": "benchmark.py:212-222",
+      "requirement": "TRUE_POSITIVE accounting",
+      "requirement_id": 5,
+      "status": "COVERED",
+      "test_name": "test_accounting_keeps_inconclusive_and_harness_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:220-221",
+      "requirement": "FALSE_POSITIVE accounting",
+      "requirement_id": 6,
+      "status": "COVERED",
+      "test_name": "test_accounting_keeps_inconclusive_and_harness_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:220-221",
+      "requirement": "TRUE_NEGATIVE accounting",
+      "requirement_id": 7,
+      "status": "COVERED",
+      "test_name": "test_accounting_keeps_inconclusive_and_harness_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:218-219",
+      "requirement": "FALSE_NEGATIVE accounting",
+      "requirement_id": 8,
+      "status": "COVERED",
+      "test_name": "test_accounting_keeps_inconclusive_and_harness_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:213-216",
+      "requirement": "INCONCLUSIVE separate",
+      "requirement_id": 9,
+      "status": "COVERED",
+      "test_name": "test_accounting_keeps_inconclusive_and_harness_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:213-214",
+      "requirement": "HARNESS failure separate",
+      "requirement_id": 10,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:315",
+      "requirement": "all-attempt inconclusive denominator",
+      "requirement_id": 11,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:291,312",
+      "requirement": "exclusions disclosed without denominator hiding",
+      "requirement_id": 12,
+      "status": "COVERED",
+      "test_name": "test_observation_binding_and_exclusions_do_not_hide_attempts"
+    },
+    {
+      "implementation_location": "benchmark.py:215",
+      "requirement": "refusal not automatically safe",
+      "requirement_id": 13,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:213-214",
+      "requirement": "provider failure not model safety",
+      "requirement_id": 14,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:313",
+      "requirement": "observable impact requirement",
+      "requirement_id": 15,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:147-148",
+      "requirement": "model prose cannot establish impact",
+      "requirement_id": 16,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:313",
+      "requirement": "missing impact evidence",
+      "requirement_id": 17,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:292-316",
+      "requirement": "reproducibility calculation",
+      "requirement_id": 18,
+      "status": "COVERED",
+      "test_name": "test_reproducibility_and_no_retry_cherry_picking"
+    },
+    {
+      "implementation_location": "benchmark.py:295",
+      "requirement": "security-relevant agreement",
+      "requirement_id": 19,
+      "status": "COVERED",
+      "test_name": "test_reproducibility_and_no_retry_cherry_picking"
+    },
+    {
+      "implementation_location": "benchmark.py:296-317",
+      "requirement": "regression detection",
+      "requirement_id": 20,
+      "status": "COVERED",
+      "test_name": "test_regression_and_cost_metrics_are_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:297-319",
+      "requirement": "allowed preservation",
+      "requirement_id": 21,
+      "status": "COVERED",
+      "test_name": "test_remediation_requires_allowed_preservation"
+    },
+    {
+      "implementation_location": "benchmark.py:299",
+      "requirement": "verified remediation requires block",
+      "requirement_id": 22,
+      "status": "COVERED",
+      "test_name": "test_remediation_requires_forbidden_block_and_zero_impact"
+    },
+    {
+      "implementation_location": "benchmark.py:299",
+      "requirement": "verified remediation requires zero impact",
+      "requirement_id": 23,
+      "status": "COVERED",
+      "test_name": "test_remediation_requires_forbidden_block_and_zero_impact"
+    },
+    {
+      "implementation_location": "benchmark.py:297-299",
+      "requirement": "verified remediation requires preservation",
+      "requirement_id": 24,
+      "status": "COVERED",
+      "test_name": "test_remediation_requires_allowed_preservation"
+    },
+    {
+      "implementation_location": "benchmark.py:297-319",
+      "requirement": "block-everything fails preservation",
+      "requirement_id": 25,
+      "status": "COVERED",
+      "test_name": "test_remediation_requires_allowed_preservation"
+    },
+    {
+      "implementation_location": "benchmark.py:321",
+      "requirement": "actual cost UNKNOWN",
+      "requirement_id": 26,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:322",
+      "requirement": "estimated cost separate",
+      "requirement_id": 27,
+      "status": "COVERED",
+      "test_name": "test_regression_and_cost_metrics_are_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:321-322",
+      "requirement": "actual/estimated not combined",
+      "requirement_id": 28,
+      "status": "COVERED",
+      "test_name": "test_regression_and_cost_metrics_are_separate"
+    },
+    {
+      "implementation_location": "benchmark.py:291,323",
+      "requirement": "machine-readable exclusions",
+      "requirement_id": 29,
+      "status": "COVERED",
+      "test_name": "test_observation_binding_and_exclusions_do_not_hide_attempts"
+    },
+    {
+      "implementation_location": "benchmark.py:160-162",
+      "requirement": "duplicate accounting",
+      "requirement_id": 30,
+      "status": "COVERED",
+      "test_name": "test_interrupted_duplicate_retry_and_lineage_are_structural"
+    },
+    {
+      "implementation_location": "benchmark.py:160",
+      "requirement": "retry accounting",
+      "requirement_id": 31,
+      "status": "COVERED",
+      "test_name": "test_reproducibility_and_no_retry_cherry_picking"
+    },
+    {
+      "implementation_location": "benchmark.py:280-302",
+      "requirement": "no retry cherry-picking",
+      "requirement_id": 32,
+      "status": "COVERED",
+      "test_name": "test_reproducibility_and_no_retry_cherry_picking"
+    },
+    {
+      "implementation_location": "benchmark.py:155",
+      "requirement": "interrupted attempts represented",
+      "requirement_id": 33,
+      "status": "COVERED",
+      "test_name": "test_interrupted_duplicate_retry_and_lineage_are_structural"
+    },
+    {
+      "implementation_location": "benchmark.py:64-65,308",
+      "requirement": "case-family lineage",
+      "requirement_id": 34,
+      "status": "COVERED",
+      "test_name": "test_interrupted_duplicate_retry_and_lineage_are_structural"
+    },
+    {
+      "implementation_location": "benchmark.py:308,324-325",
+      "requirement": "no related-family double count",
+      "requirement_id": 35,
+      "status": "COVERED",
+      "test_name": "test_interrupted_duplicate_retry_and_lineage_are_structural"
+    },
+    {
+      "implementation_location": "benchmark.py:332-338",
+      "requirement": "read-only historical import",
+      "requirement_id": 36,
+      "status": "COVERED",
+      "test_name": "test_historical_import_is_read_only_and_missing_stays_missing"
+    },
+    {
+      "implementation_location": "benchmark.py:336-338",
+      "requirement": "missing historical field remains missing",
+      "requirement_id": 37,
+      "status": "COVERED",
+      "test_name": "test_historical_import_is_read_only_and_missing_stays_missing"
+    },
+    {
+      "implementation_location": "benchmark.py:332-338",
+      "requirement": "no historical inference",
+      "requirement_id": 38,
+      "status": "COVERED",
+      "test_name": "test_historical_import_is_read_only_and_missing_stays_missing"
+    },
+    {
+      "implementation_location": "benchmark.py:263-272",
+      "requirement": "deterministic report serialization",
+      "requirement_id": 39,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:259-261",
+      "requirement": "report fingerprint mutation",
+      "requirement_id": 40,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:225-227",
+      "requirement": "rates contain numerator/denominator",
+      "requirement_id": 41,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:225-227",
+      "requirement": "zero denominator explicit",
+      "requirement_id": 42,
+      "status": "COVERED",
+      "test_name": "test_zero_denominator_is_explicit"
+    },
+    {
+      "implementation_location": "benchmark.py:212-222",
+      "requirement": "ground truth independent",
+      "requirement_id": 43,
+      "status": "COVERED",
+      "test_name": "test_ground_truth_is_not_mutated_by_verdict"
+    },
+    {
+      "implementation_location": "benchmark.py:212-222",
+      "requirement": "verdict cannot mutate ground truth",
+      "requirement_id": 44,
+      "status": "COVERED",
+      "test_name": "test_ground_truth_is_not_mutated_by_verdict"
+    },
+    {
+      "implementation_location": "benchmark.py:110-136",
+      "requirement": "seed identity sealed",
+      "requirement_id": 45,
+      "status": "COVERED",
+      "test_name": "test_case_and_seed_fingerprints_are_deterministic_and_mutation_detected"
+    },
+    {
+      "implementation_location": "benchmark.py:120-125",
+      "requirement": "seed mutation detected",
+      "requirement_id": 46,
+      "status": "COVERED",
+      "test_name": "test_case_and_seed_fingerprints_are_deterministic_and_mutation_detected"
+    },
+    {
+      "implementation_location": "benchmark.py:303",
+      "requirement": "implementation version/fingerprint",
+      "requirement_id": 47,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:303",
+      "requirement": "scoring implementation identity",
+      "requirement_id": 48,
+      "status": "COVERED",
+      "test_name": "test_report_rates_have_denominators_and_cost_unknown"
+    },
+    {
+      "implementation_location": "benchmark.py:212-222",
+      "requirement": "no provider-specific PASS logic",
+      "requirement_id": 49,
+      "status": "COVERED",
+      "test_name": "test_impact_and_model_behavior_are_independent"
+    },
+    {
+      "implementation_location": "benchmark.py:139-194",
+      "requirement": "no hidden Kimura hint required",
+      "requirement_id": 50,
+      "status": "COVERED",
+      "test_name": "test_provider_neutral_case_needs_no_hidden_kimura_hint"
+    }
+  ]
+}
