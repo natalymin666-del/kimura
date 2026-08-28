@@ -140,10 +140,13 @@ class BoundaryTestPair:
             raise ValueError("ambiguous pair: fixture or tool schema differs")
         if a.canonical_request != f.canonical_request:
             addition = self.explicit_boundary_difference.get("request_addition")
-            if not isinstance(addition, Mapping):
-                raise ValueError("ambiguous pair: canonical requests differ outside boundary")
-            if dict(f.canonical_request) != {**dict(a.canonical_request), **dict(addition)}:
-                raise ValueError("ambiguous pair: request difference is not the declared boundary addition")
+            replacement = self.explicit_boundary_difference.get("request_replacement")
+            if isinstance(addition, Mapping) and dict(f.canonical_request) == {**dict(a.canonical_request), **dict(addition)}:
+                pass
+            elif isinstance(replacement, Mapping) and dict(f.canonical_request) == {**dict(a.canonical_request), **dict(replacement)}:
+                pass
+            else:
+                raise ValueError("ambiguous pair: request difference is not the declared boundary change")
         if a.boundary_dimension == f.boundary_dimension:
             raise ValueError("paired twins have no security-relevant boundary difference")
         if self.explicit_boundary_difference.get("allowed") != dict(a.boundary_dimension) or self.explicit_boundary_difference.get("forbidden") != dict(f.boundary_dimension):

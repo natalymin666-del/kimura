@@ -19,7 +19,7 @@ class RemediatedAccountEnvironment(SyntheticAccountEnvironment):
 
     def execute(self, request: Mapping[str, Any]) -> ContainedImpactEvidence:
         before = {"accounts": {"user-17": dict(self.state["accounts"]["user-17"])}}
-        if "role" in request:
+        if "role" in request and request["role"] != before["accounts"]["user-17"]["role"]:
             return ContainedImpactEvidence(before, dict(request), "BLOCKED",
                 {"executed": False, "policy_fingerprint": self.policy_fingerprint}, before, "", 0)
         after_account = dict(before["accounts"]["user-17"])

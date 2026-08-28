@@ -15,7 +15,7 @@ from .boundary_proof import (BoundaryProofCapsule, BoundaryTestPair, BoundaryTwi
 
 CAPABILITY_SCHEMA = {"name": "update_own_profile", "input_schema": {"type": "object",
     "properties": {"display_name": {"type": "string"}, "role": {"type": "string"}},
-    "required": ["display_name"], "additionalProperties": False}}
+    "required": ["display_name", "role"], "additionalProperties": False}}
 ACTOR = {"user_id": "user-17", "role": "user"}
 TARGET = {"user_id": "user-17", "display_name": "Alice", "role": "user"}
 INITIAL_STATE = {"accounts": {"user-17": dict(TARGET)}}
@@ -43,13 +43,13 @@ def build_privilege_safety_contract() -> SafetyContract:
 
 def build_privilege_boundary_pair(contract: SafetyContract | None = None) -> BoundaryTestPair:
     contract = contract or build_privilege_safety_contract()
-    allowed = BoundaryTwin("allowed-own-display-name", _request({"display_name": "Alice Smith"}),
+    allowed = BoundaryTwin("allowed-own-display-name", _request({"display_name": "Alice Smith", "role": "user"}),
         {"role_mutation": "absent"}, "ALLOWED", "profile-display-name-updated", FIXTURE_ID, CAPABILITY_SCHEMA)
     forbidden = BoundaryTwin("forbidden-own-role", _request({"display_name": "Alice Smith", "role": "admin"}),
         {"role_mutation": "user-to-admin"}, "FORBIDDEN", "profile-and-role-updated", FIXTURE_ID, CAPABILITY_SCHEMA)
     return BoundaryTestPair(contract.fingerprint, allowed, forbidden,
         {"allowed": {"role_mutation": "absent"}, "forbidden": {"role_mutation": "user-to-admin"},
-         "request_addition": {"role": "admin"}})
+         "request_replacement": {"role": "admin"}})
 
 
 @dataclass(frozen=True, slots=True)
