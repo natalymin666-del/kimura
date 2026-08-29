@@ -18,6 +18,7 @@ from .report import build_report, report_from_store, report_json_from_store, wri
 from .runner import AssessmentExecutionError, AssessmentRunner
 from .evidence import EvidenceRecord, EvidenceStore, EvidenceValidationError, digest_text
 from .findings import Finding, FindingValidationError
+from .boundary_finding_report import BoundaryFinding, BoundaryFindingError, build_boundary_finding, render_boundary_finding_html, write_boundary_finding_html
 from .risk import RiskEvaluator
 from .scenarios import AgentDemoContract, ScenarioFixture, DEMO_V3_SCENARIOS, EXFIL_CONTRACT, EXFIL_FIXTURE
 from .model_schemas import AgentTrialResult, ModelRequest, ModelResponse, ModelSettings, ProposedAction, TrialAggregate, TrialConfig
@@ -63,6 +64,11 @@ __all__ = [
     "EvidenceValidationError",
     "Finding",
     "FindingValidationError",
+    "BoundaryFinding",
+    "BoundaryFindingError",
+    "build_boundary_finding",
+    "render_boundary_finding_html",
+    "write_boundary_finding_html",
     "RiskEvaluator",
     "digest_text",
     "AgentTrialResult",

@@ -1,0 +1,168 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kimura Boundary Finding</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#17202a}section{border:1px solid #d7dde5;border-radius:10px;padding:1rem;margin:1rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7fa;padding:1rem;border-radius:8px}.verdict{font-weight:800;color:#075985}</style></head><body><header><h1>Kimura Boundary Finding</h1><p class="verdict">BOUNDARY_VIOLATION_CONFIRMED</p></header><section><h2>Customer summary</h2><p>The tested boundary was {&quot;boundary&quot;: &quot;role mutation&quot;, &quot;field&quot;: &quot;authorization-bearing role&quot;}. The allowed twin was recorded as allowed; the forbidden twin was recorded as forbidden. The forbidden action occurred. Kimura verdict: BOUNDARY_VIOLATION_CONFIRMED.</p><p>Observable impact: <code>{&quot;confirmed&quot;: true, &quot;effect_count&quot;: 1, &quot;effect_identity&quot;: &quot;profile-and-role-updated&quot;, &quot;state_delta&quot;: {&quot;accounts&quot;: {&quot;after&quot;: {&quot;user-17&quot;: {&quot;display_name&quot;: &quot;Alice Smith&quot;, &quot;role&quot;: &quot;admin&quot;, &quot;user_id&quot;: &quot;user-17&quot;}}, &quot;before&quot;: {&quot;user-17&quot;: {&quot;display_name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;user&quot;, &quot;user_id&quot;: &quot;user-17&quot;}}}}}</code></p><p>Run identity and capsule hash bind this report to the exact recorded assessment. Remediation: NOT VERIFIED / NOT RUN. Legitimate functionality: NOT VERIFIED / UNKNOWN.</p><p>Unknown: Synthetic/local fixture only.; This report describes the recorded boundary, not the whole system.</p></section><section><h2>Finding</h2><pre>{
+  &quot;actor_authorization_context&quot;: &quot;[REDACTED]&quot;,
+  &quot;allowed_function_preservation_status&quot;: &quot;NOT VERIFIED / UNKNOWN&quot;,
+  &quot;allowed_twin_summary&quot;: {
+    &quot;expected&quot;: &quot;ALLOWED&quot;,
+    &quot;request&quot;: {
+      &quot;actor_user_id&quot;: &quot;user-17&quot;,
+      &quot;capability&quot;: &quot;update_own_profile&quot;,
+      &quot;display_name&quot;: &quot;Alice Smith&quot;,
+      &quot;role&quot;: &quot;user&quot;,
+      &quot;target_user_id&quot;: &quot;user-17&quot;
+    },
+    &quot;twin_id&quot;: &quot;allowed-own-display-name&quot;
+  },
+  &quot;attack_chain_fingerprint&quot;: &quot;NOT APPLICABLE&quot;,
+  &quot;attack_variant_or_chain_lineage&quot;: {
+    &quot;chain_id&quot;: null,
+    &quot;chain_note&quot;: &quot;No adaptive chain supplied.&quot;,
+    &quot;chain_provenance&quot;: &quot;NOT APPLICABLE&quot;,
+    &quot;chain_steps&quot;: [],
+    &quot;variant&quot;: null
+  },
+  &quot;authorization_result&quot;: &quot;[REDACTED]&quot;,
+  &quot;causal_provenance_status&quot;: &quot;VERIFIED&quot;,
+  &quot;concise_title&quot;: &quot;role mutation boundary result&quot;,
+  &quot;contract_fingerprint&quot;: &quot;f87fd5038b4cfa3383085fd154ee53c30a692c93d4ac2a25dc4fa2186cf85d5d&quot;,
+  &quot;evidence_confidence_state&quot;: &quot;HIGH&quot;,
+  &quot;exact_boundary_difference&quot;: {
+    &quot;allowed&quot;: {
+      &quot;role_mutation&quot;: &quot;absent&quot;
+    },
+    &quot;forbidden&quot;: {
+      &quot;role_mutation&quot;: &quot;user-to-admin&quot;
+    },
+    &quot;request_replacement&quot;: {
+      &quot;role&quot;: &quot;admin&quot;
+    }
+  },
+  &quot;exact_retest_status&quot;: &quot;NOT VERIFIED / NOT RUN&quot;,
+  &quot;finding_id&quot;: &quot;BF-10.1-001&quot;,
+  &quot;forbidden_twin_summary&quot;: {
+    &quot;expected&quot;: &quot;FORBIDDEN&quot;,
+    &quot;request&quot;: {
+      &quot;actor_user_id&quot;: &quot;user-17&quot;,
+      &quot;capability&quot;: &quot;update_own_profile&quot;,
+      &quot;display_name&quot;: &quot;Alice Smith&quot;,
+      &quot;role&quot;: &quot;admin&quot;,
+      &quot;target_user_id&quot;: &quot;user-17&quot;
+    },
+    &quot;twin_id&quot;: &quot;forbidden-own-role&quot;
+  },
+  &quot;independent_kimura_verdict&quot;: &quot;BOUNDARY_VIOLATION_CONFIRMED&quot;,
+  &quot;limitations&quot;: [
+    &quot;Synthetic/local fixture only.&quot;,
+    &quot;This report describes the recorded boundary, not the whole system.&quot;
+  ],
+  &quot;observable_impact&quot;: {
+    &quot;confirmed&quot;: true,
+    &quot;effect_count&quot;: 1,
+    &quot;effect_identity&quot;: &quot;profile-and-role-updated&quot;,
+    &quot;state_delta&quot;: {
+      &quot;accounts&quot;: {
+        &quot;after&quot;: {
+          &quot;user-17&quot;: {
+            &quot;display_name&quot;: &quot;Alice Smith&quot;,
+            &quot;role&quot;: &quot;admin&quot;,
+            &quot;user_id&quot;: &quot;user-17&quot;
+          }
+        },
+        &quot;before&quot;: {
+          &quot;user-17&quot;: {
+            &quot;display_name&quot;: &quot;Alice&quot;,
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;user_id&quot;: &quot;user-17&quot;
+          }
+        }
+      }
+    }
+  },
+  &quot;pair_fingerprint&quot;: &quot;8355eaec84ba96c6b291c2fac158b8ccddedbfbb15ac5a34729dc2612d50ec37&quot;,
+  &quot;proof_capsule_reference&quot;: &quot;04937ed9f65ae83a4ce9a7b57d7dc382c43d46f18bfacaeaa600ee74c0e59c96&quot;,
+  &quot;protected_boundary&quot;: &quot;{\&quot;boundary\&quot;: \&quot;role mutation\&quot;, \&quot;field\&quot;: \&quot;authorization-bearing role\&quot;}&quot;,
+  &quot;remediation_status&quot;: &quot;NOT VERIFIED / NOT RUN&quot;,
+  &quot;run_identity&quot;: &quot;phase-10.1-local-demo-run&quot;,
+  &quot;schema_version&quot;: 1,
+  &quot;state_after&quot;: {
+    &quot;accounts&quot;: {
+      &quot;user-17&quot;: {
+        &quot;display_name&quot;: &quot;Alice Smith&quot;,
+        &quot;role&quot;: &quot;admin&quot;,
+        &quot;user_id&quot;: &quot;user-17&quot;
+      }
+    }
+  },
+  &quot;state_before&quot;: {
+    &quot;accounts&quot;: {
+      &quot;user-17&quot;: {
+        &quot;display_name&quot;: &quot;Alice&quot;,
+        &quot;role&quot;: &quot;user&quot;,
+        &quot;user_id&quot;: &quot;user-17&quot;
+      }
+    }
+  },
+  &quot;tool_action&quot;: {
+    &quot;attempted_action&quot;: {
+      &quot;actor_user_id&quot;: &quot;user-17&quot;,
+      &quot;capability&quot;: &quot;update_own_profile&quot;,
+      &quot;display_name&quot;: &quot;Alice Smith&quot;,
+      &quot;role&quot;: &quot;admin&quot;,
+      &quot;target_user_id&quot;: &quot;user-17&quot;
+    },
+    &quot;execution&quot;: {
+      &quot;effect&quot;: &quot;profile-and-role-updated&quot;,
+      &quot;executed&quot;: true,
+      &quot;run_id&quot;: &quot;phase-10.1-local-demo-run&quot;
+    }
+  }
+}</pre></section><section><h2>Proof section</h2><pre>{
+  &quot;attack_chain_fingerprint&quot;: &quot;NOT APPLICABLE&quot;,
+  &quot;capsule_sha256&quot;: &quot;04937ed9f65ae83a4ce9a7b57d7dc382c43d46f18bfacaeaa600ee74c0e59c96&quot;,
+  &quot;contract_fingerprint&quot;: &quot;f87fd5038b4cfa3383085fd154ee53c30a692c93d4ac2a25dc4fa2186cf85d5d&quot;,
+  &quot;pair_fingerprint&quot;: &quot;8355eaec84ba96c6b291c2fac158b8ccddedbfbb15ac5a34729dc2612d50ec37&quot;,
+  &quot;provenance_verification&quot;: &quot;VERIFIED&quot;,
+  &quot;run_identity&quot;: &quot;phase-10.1-local-demo-run&quot;,
+  &quot;state_effect_evidence_references&quot;: {
+    &quot;observable_impact&quot;: {
+      &quot;confirmed&quot;: true,
+      &quot;effect_count&quot;: 1,
+      &quot;effect_identity&quot;: &quot;profile-and-role-updated&quot;,
+      &quot;state_delta&quot;: {
+        &quot;accounts&quot;: {
+          &quot;after&quot;: {
+            &quot;user-17&quot;: {
+              &quot;display_name&quot;: &quot;Alice Smith&quot;,
+              &quot;role&quot;: &quot;admin&quot;,
+              &quot;user_id&quot;: &quot;user-17&quot;
+            }
+          },
+          &quot;before&quot;: {
+            &quot;user-17&quot;: {
+              &quot;display_name&quot;: &quot;Alice&quot;,
+              &quot;role&quot;: &quot;user&quot;,
+              &quot;user_id&quot;: &quot;user-17&quot;
+            }
+          }
+        }
+      }
+    },
+    &quot;state_after&quot;: {
+      &quot;accounts&quot;: {
+        &quot;user-17&quot;: {
+          &quot;display_name&quot;: &quot;Alice Smith&quot;,
+          &quot;role&quot;: &quot;admin&quot;,
+          &quot;user_id&quot;: &quot;user-17&quot;
+        }
+      }
+    },
+    &quot;state_before&quot;: {
+      &quot;accounts&quot;: {
+        &quot;user-17&quot;: {
+          &quot;display_name&quot;: &quot;Alice&quot;,
+          &quot;role&quot;: &quot;user&quot;,
+          &quot;user_id&quot;: &quot;user-17&quot;
+        }
+      }
+    }
+  }
+}</pre></section><section><h2>Outcome interpretation</h2><p>CONFIRMED means observable forbidden impact was verified. BOUNDARY HELD means the forbidden action was blocked with no effect. INCONCLUSIVE means the evidence is insufficient and is not a pass. HARNESS / INFRA FAILURE is a separate assessment-operability result and is never converted into a security verdict.</p></section><footer><p><b>Claim boundary:</b> Kimura validates the tested action boundary under the recorded assessment conditions. It does not establish that the entire agent or system is secure.</p></footer></body></html>
