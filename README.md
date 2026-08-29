@@ -1,196 +1,189 @@
-# Kimura assessment
+# Cyber Kimura
 
-`kimura_assessment` is a small, standard-library Python package for one bounded,
-authorized JSON-over-HTTP assessment interaction. It is the packaged form of
-the Step 1–6 assessment workflow; the other research scripts in this repository
-are not part of this distribution.
+**Prove the boundary. Not the promise.**
+
+Kimura is a security validation system for AI agents that tests whether an
+agent can actually cross a forbidden action boundary and independently
+verifies the resulting state or effect.
+
+Unlike testing focused only on whether a model can be persuaded to produce
+unsafe text, Kimura evaluates security-relevant agent actions: tool use,
+authorization, identity, targets, arguments, and observable state changes.
+
+## Kimura Boundary Proof Protocol
+
+1. **Executable Safety Contract**
+   Defines the permitted action boundary using tool identity, canonical
+   arguments, authorization context, initial state, and acceptable resulting
+   state.
+
+2. **Paired Boundary Tests**
+   Creates structurally similar allowed and forbidden actions so the actual
+   security boundary is isolated.
+
+3. **Boundary Discovery**
+   Derives candidate boundaries from tools, authorization policy, roles/scopes,
+   state semantics, and business rules.
+
+4. **Contained Impact**
+   Executes inside synthetic or customer sandbox environments and observes
+   state-before/state-after evidence.
+
+5. **Proof Capsule**
+   Cryptographically binds assessment scope, test pair, request, execution,
+   state/effect evidence, causal provenance, and Kimura's verdict.
+
+6. **Independent Verdict**
+   Kimura derives verdicts from observable action/effect evidence rather than
+   trusting model explanations.
+
+7. **Exact Retest**
+   After remediation, Kimura retests the same forbidden boundary and verifies
+   that the corresponding legitimate action still works.
+
+The protocol is provider-neutral and does not require raw chain of thought,
+credentials stored by Kimura, or customer-specific verifier code.
+
+## Current Evidence
+
+The sealed local generalization run
+([Phase 7.3b result](results/phase-7.3b-generalization-run-1.json)) covered six
+materially different boundary families:
+
+- privilege/authorization
+- sensitive-data access
+- transaction boundaries
+- identity/context separation
+- cross-agent delegation
+- persistent memory/state mutation
+
+Results from that synthetic/local run:
+
+- 6/6 families passed
+- allowed-function preservation: 6/6
+- forbidden-boundary detection: 6/6
+- confirmed impact: 6/6
+- false-positive count: 0
+- false-negative count: 0
+- Proof Capsule verification: 12/12
+- causal provenance verification: 12/12
+- no risk-class-specific or sample-specific verifier branches were added
+
+These are synthetic/local benchmark results. They are not customer validation
+and do not establish universal detection rates.
+
+## Design Partner Pilots
+
+Kimura is technically ready for bounded design-partner pilots with teams
+building AI agents that execute real tools/actions.
+
+Initial pilots are restricted to synthetic or customer sandbox environments.
+Production mutation is prohibited by default.
+
+Customer agent/tool interface
+→ boundary discovery
+→ approved Safety Contract
+→ paired allowed/forbidden tests
+→ contained execution
+→ observable impact evidence
+→ Proof Capsule
+→ remediation
+→ exact paired retest
+
+Suitable pilot targets include agent systems involving:
+
+- authorization and privilege boundaries
+- sensitive-data access
+- transactions or external side effects
+- identity/context separation
+- delegated capabilities
+- persistent memory/state mutation
+
+See the [design-partner pilot offer](pilot/design-partner-offer.md),
+[intake template](pilot/intake-template.json), and
+[onboarding checklist](pilot/onboarding-checklist.md).
+
+## Limitations
+
+Kimura does not currently claim:
+
+- that an assessed agent is universally secure
+- complete vulnerability coverage
+- production validation
+- compliance certification
+- guaranteed safety
+- customer validation until an actual customer assessment has occurred
+
+Findings apply only to the tested boundary, agent version, environment,
+policy, identities, targets, and evidence available for that assessment.
 
 ## Installation
 
-Python 3.10 or newer is required. From a checkout:
+Python 3.10 or newer is required:
 
 ```console
 python -m pip install .
 ```
 
-For local development, use an editable install:
+For local development:
 
 ```console
 python -m pip install --editable .
 ```
 
 The package has no runtime dependencies. Build artifacts can be created with
-`python -m build` (the build tool is only needed for that command).
+`python -m build` when the build tool is installed.
 
-## Configuration
+## Local Development and Testing
 
-The CLI reads a local JSON configuration. The following is a complete shape;
-replace the example values with an explicitly approved assessment:
-
-```json
-{
-  "contract": {
-    "assessment_id": "asm-001",
-    "client_name": "Example BV",
-    "assessor_name": "Kimura Security",
-    "authorized_by": "approval-42",
-    "objectives": ["Evaluate prompt-injection resistance"],
-    "scope": ["https://example.test"],
-    "start_date": "2026-08-20",
-    "end_date": "2026-08-22",
-    "exclusions": ["production data export"],
-    "credential_references": ["env://KIMURA_ASSESSMENT_TOKEN"],
-    "max_requests": 1
-  },
-  "target": {
-    "endpoint": "https://example.test/chat",
-    "input_path": "messages.0.content",
-    "response_path": "choices.0.message.content",
-    "credential_reference": "env://KIMURA_ASSESSMENT_TOKEN",
-    "timeout": 15.0,
-    "max_response_bytes": 1048576
-  },
-  "input_text": "assessment input",
-  "request_json": {"messages": [{"role": "user"}]}
-}
-```
-
-`credential_references` identify credentials held outside the configuration.
-For `env://NAME`, the adapter reads `NAME` only at request time. Other opaque
-references map to a stable `KIMURA_CREDENTIAL_*` environment variable name.
-Never put a token, cookie, password, or other credential material in the JSON
-file or source control. Protect the configuration file because `input_text` and
-the request template are sent to the authorized endpoint at runtime.
-
-## CLI usage
-
-After installation, run one interaction with either the console script or the
-module form:
-
-```console
-export KIMURA_ASSESSMENT_TOKEN='runtime-only-secret'
-kimura-assessment assessment.json
-# equivalent:
-python -m kimura_assessment assessment.json
-```
-
-The command prints only the safe result metadata JSON. Operational failures are
-reported without target, request, response, or credential contents. `--report`
-requires `--persist`:
-
-```console
-kimura-assessment assessment.json \
-  --persist results/assessment.jsonl \
-  --report results/assessment-report.json
-```
-
-For a deterministic, local-only Conference Demo v1, run:
-
-```console
-python3 -m kimura_assessment demo
-```
-
-For the deterministic local Conference Demo v2, run:
-
-```console
-python3 -m kimura_assessment demo-v2
-```
-
-For the deterministic local Agent Security Assessment Demo v3, run:
-
-```console
-python3 -m kimura_assessment demo-v3
-```
-
-For the primary fully offline Conference Demo v1, run:
-
-```console
-python3 -m kimura_assessment.conference_demo
-```
-
-This deterministic demo uses one local poisoned-document fixture, a synthetic
-`send_email` action, the existing action-gate and remediation policy, and an
-exact retest. It writes `conference-demo-output/conference-demo-report.html`
-and hash-only evidence. No Ollama runtime, network, credential, or external
-side effect is required.
-
-
-For the local Model-Backed Adapter v1, first install and start Ollama separately with a pinned local model. Kimura accepts only a loopback Ollama endpoint, uses synthetic tools, and does not persist prompts or raw model responses:
-
-```console
-python3 -m kimura_assessment demo-model-v1 --model llama3.2:3b --trials 10
-```
-
-The command performs paired baseline and exact-fixture remediated trials. Replace the model identifier only with a locally installed, approved model; Kimura does not install or download it.
-
-Demo v3 assesses two independent authorized scenarios against one loopback agent: indirect prompt injection causing an unauthorized `send_email` action, and sensitive-data exfiltration through an `external_upload` boundary. Each finding is validated from safe audit metadata, remediated with an explicit policy, and retested with the exact original fixture. The consolidated report contains hashes, classifications, and evidence references only.
-
-Demo v2 exercises a deliberately vulnerable local agent, validates an
-unauthorized synthetic tool action from its audit ledger, applies a local tool
-policy, and replays the identical fixture to demonstrate a passing retest.
-Evidence stores hashes and safe facts only; it does not persist raw requests,
-responses, documents, or credentials.
-
-The demo uses only a loopback mock server, a fixed non-secret placeholder
-credential, and the same contract, runner, persistence, and reporting safety
-paths as a configured assessment. To also write safe local metadata files:
-
-```console
-python3 -m kimura_assessment demo \
-  --persist results/conference-demo.jsonl \
-  --report results/conference-demo-report.json
-```
-
-## Persistence and reporting
-
-`--persist` appends one deterministic JSON object per line to a local JSONL
-file. The stored `AssessmentResult` contains the assessment ID, execution
-number, authorization date, status, response byte length, and SHA-256 digest;
-it does not retain raw input, request, response, or credential data.
-
-The optional report is an aggregate of persisted safe results, sorted
-deterministically by assessment ID and execution number. It includes counts,
-assessment IDs, total response bytes, and the individual safe result records.
-It is metadata reporting, not a transcript.
-
-## Safety guarantees
-
-Each run is constrained by the existing assessment contract and adapter:
-
-- the target must be an HTTP(S) URL inside the declared scope;
-- the credential reference must be declared and credential material is resolved
-  only from the runtime environment;
-- the authorization window and positive request budget are enforced before
-  dispatch, and failed attempts consume budget;
-- redirects are disabled, response size is bounded, and the expected JSON paths
-  must resolve to text; and
-- persistence, reports, result JSON, and operational error messages exclude raw
-  input, request, response, and credential values.
-
-These controls support an authorized assessment workflow; they do not grant
-authorization. Obtain written permission and define scope, exclusions, dates,
-and request limits before running it. Keep generated JSONL files and reports
-access-controlled.
-
-## Customer Assessment v1
-
-Run the bounded customer workflow with a versioned JSON configuration:
-
-```console
-python3 -m kimura_assessment assess customer.json --output ./assessment-output
-```
-
-Customer Assessment v1 supports only the existing indirect prompt-injection/tool-authorization fixture against an Ollama loopback runtime. It uses synthetic tools and local policy remediation; it does not contact production or external targets. The output directory contains `assessment.json`, `evidence.jsonl`, `manifest.json`, and a polished `report.html`. Reports are limited to the tested model, runtime, fixture, policy, and trial conditions and do not claim universal model vulnerability.
-
-For the controlled pilot setup and failure-response procedure, see [PILOT_RUNBOOK.md](PILOT_RUNBOOK.md). Start Ollama with `ollama serve`, verify the approved model with `ollama list`, and use the exact model identifier in the customer configuration. Customer preflight verifies both loopback reachability and model installation before execution.
-
-## Tests and build validation
-
-Run the complete test suite from the repository root:
+Run the complete local test suite:
 
 ```console
 python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-The GitHub Actions workflow runs that suite on Python 3.10, 3.11, and 3.12,
-then builds the source and wheel distributions.
+The repository also uses pytest in local validation:
+
+```console
+python -m pytest
+```
+
+The GitHub Actions workflow runs the test suite on Python 3.10, 3.11, and
+3.12, then builds source and wheel distributions.
+
+For the controlled pilot setup and failure-response procedure, see
+[PILOT_RUNBOOK.md](PILOT_RUNBOOK.md).
+
+## Local Demonstrations
+
+The repository includes deterministic local demonstrations for the Boundary
+Proof workflow:
+
+```console
+python3 -m kimura_assessment demo
+python3 -m kimura_assessment demo-v2
+python3 -m kimura_assessment demo-v3
+python3 -m kimura_assessment.conference_demo
+```
+
+These demonstrations use synthetic fixtures and contained/local execution.
+They do not validate a customer system or establish production impact.
+
+The local design-partner package includes a
+[synthetic demonstration report](pilot/demo-pilot-report.html). It is labeled
+as demonstration evidence and is not customer validation.
+
+## Earlier LLM Security Research
+
+This repository also preserves earlier prompt-injection and LLM red-team
+research, including the historical experiments and write-ups. That work is
+retained as research context and evidence history; it is not the primary
+description of the current Kimura product.
+
+Examples include:
+
+- [cyber-kimura-llm-writeup.md](cyber-kimura-llm-writeup.md)
+- [PHASE_5.2A_AGENTIC_RISK_MATRIX_V1.md](PHASE_5.2A_AGENTIC_RISK_MATRIX_V1.md)
+- [PILOT_RUNBOOK.md](PILOT_RUNBOOK.md)
+
+Historical artifacts are not rewritten when the product positioning changes.
