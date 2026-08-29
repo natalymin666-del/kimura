@@ -176,7 +176,7 @@ as demonstration evidence and is not customer validation.
 ## Earlier LLM Security Research
 
 This repository also preserves earlier prompt-injection and LLM red-team
-research, including the historical experiments and write-ups. That work is
+research, including historical experiments and write-ups. That work is
 retained as research context and evidence history; it is not the primary
 description of the current Kimura product.
 
@@ -186,4 +186,4 @@ Examples include:
 - [PHASE_5.2A_AGENTIC_RISK_MATRIX_V1.md](PHASE_5.2A_AGENTIC_RISK_MATRIX_V1.md)
 - [PILOT_RUNBOOK.md](PILOT_RUNBOOK.md)
 
-Historical artifacts are not rewritten when the product positioning changes.
+Historical artifacts are not rewritten when product positioning changes.
