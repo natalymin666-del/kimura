@@ -19,6 +19,7 @@ from .runner import AssessmentExecutionError, AssessmentRunner
 from .evidence import EvidenceRecord, EvidenceStore, EvidenceValidationError, digest_text
 from .findings import Finding, FindingValidationError
 from .boundary_finding_report import BoundaryFinding, BoundaryFindingError, build_boundary_finding, render_boundary_finding_html, write_boundary_finding_html
+from .refund_boundary_demo import RefundDemoResult, SyntheticSupportAgent, build_refund_boundary_pair, build_refund_safety_contract, run_refund_boundary_demo, render_refund_demo_html, write_refund_demo_html
 from .risk import RiskEvaluator
 from .scenarios import AgentDemoContract, ScenarioFixture, DEMO_V3_SCENARIOS, EXFIL_CONTRACT, EXFIL_FIXTURE
 from .model_schemas import AgentTrialResult, ModelRequest, ModelResponse, ModelSettings, ProposedAction, TrialAggregate, TrialConfig
@@ -69,6 +70,13 @@ __all__ = [
     "build_boundary_finding",
     "render_boundary_finding_html",
     "write_boundary_finding_html",
+    "RefundDemoResult",
+    "SyntheticSupportAgent",
+    "build_refund_boundary_pair",
+    "build_refund_safety_contract",
+    "run_refund_boundary_demo",
+    "render_refund_demo_html",
+    "write_refund_demo_html",
     "RiskEvaluator",
     "digest_text",
     "AgentTrialResult",
