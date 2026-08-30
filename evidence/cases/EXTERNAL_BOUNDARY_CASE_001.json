@@ -1,0 +1,89 @@
+{
+  "case_id": "EXTERNAL_BOUNDARY_CASE_001",
+  "title": "Slack Workspace Analytics — Owner vs Regular Member",
+  "target": "slack.com",
+  "program_scope_reference": {
+    "program": "Slack HackerOne Bug Bounty Program",
+    "asset": "slack.com",
+    "scope_contract_fingerprint": "df56b8442b016e930caccbc4eba1e67637b5c9d3b5f6ee8e3ad80fc7c2179f4b"
+  },
+  "assessment_type": "external production boundary case; human-operated authorization boundary observation",
+  "workspace_reference": "bimbo",
+  "actors": {
+    "allowed": {
+      "identity_reference": "TEST_IDENTITY_A",
+      "role": "Primary Workspace Owner",
+      "researcher_controlled": true
+    },
+    "forbidden": {
+      "identity_reference": "TEST_IDENTITY_B",
+      "role": "Regular Member",
+      "researcher_controlled": true
+    }
+  },
+  "protected_resource": "Workspace Analytics -> Overview",
+  "fixture_state": {
+    "s0": "Everyone, except guests (default)",
+    "s1": "Workspace Owner and Admins only",
+    "s1_source": "Human-observed Slack UI state; Saved displayed after manual Owner configuration",
+    "independent_verification": false
+  },
+  "pair_fingerprint": "2a68559340d66f65bd2d3a52d74c06dfa4d8a62f767790d2b88ba2aa7852e083",
+  "allowed_observation": {
+    "actor_role": "Primary Workspace Owner",
+    "resource": "Workspace Analytics -> Overview",
+    "execution_mode": "HUMAN_OPERATED",
+    "attempt_count": 1,
+    "result": "PERMITTED",
+    "evidence_type": "HUMAN_OBSERVED",
+    "observed_effect": "Analytics navigation was present; Overview rendered; workspace analytics content was accessible.",
+    "independent_network_verification": false
+  },
+  "forbidden_observation": {
+    "actor_role": "Regular Member",
+    "resource": "Workspace Analytics -> Overview",
+    "execution_mode": "HUMAN_OPERATED",
+    "attempt_count": 1,
+    "result": "DENIED",
+    "evidence_type": "HUMAN_OBSERVED",
+    "ui_messages": [
+      "Only bimbo workspace admins can view this page",
+      "Sorry, but you can't view this page."
+    ],
+    "protected_analytics_content_accessible": false,
+    "independent_network_verification": false
+  },
+  "final_verdict": "BOUNDARY_HELD",
+  "authorization_bypass_found": false,
+  "vulnerability_claimed": false,
+  "evidence_provenance": {
+    "source_assessment_reference": "external_targets/slack_live_test_01.json",
+    "source_assessment_sha256": "d8f500de7faeed62bf988a2c5ad4f5c9d301862f0b07ec59e66466435b229f78",
+    "source_proof_capsule_fingerprint": "54903de37c679a43b11e9ceae940518ed1b0625968a0057caf0cebc9cf00f44f",
+    "evidence_source": "operator-supplied human observations",
+    "locally_verified_integrity": true,
+    "independent_network_verification": "NONE",
+    "kimura_network_calls": "NONE",
+    "kimura_slack_contact": "NONE"
+  },
+  "evidence_limitations": [
+    "Execution was HUMAN_OPERATED, not autonomous testing.",
+    "Evidence is HUMAN_OBSERVED.",
+    "Kimura did not independently execute the Slack requests.",
+    "No independent network/API verification is available.",
+    "This case does not establish universal Slack security or customer validation."
+  ],
+  "timestamps": {
+    "fixture_and_observation_timestamps": "NOT_SUPPLIED_BY_OPERATOR",
+    "source_recorded_at_local": "2026-08-30T12:57:34+02:00",
+    "case_frozen_at_local": "2026-08-30T12:57:34+02:00"
+  },
+  "immutability": {
+    "serialization": "canonical JSON with sorted keys, compact separators, UTF-8",
+    "digest_algorithm": "SHA-256",
+    "digest_covers": "This case object excluding immutability.case_digest",
+    "append_only_case_id": true,
+    "future_assessments_must_not_overwrite_case_001": true,
+    "case_digest": "263207873aa25e02b20bac746a04e3725452ababc75c3541a9e38129b7062872"
+  }
+}

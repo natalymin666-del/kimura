@@ -1,0 +1,96 @@
+{
+  "contract_schema_version": "1.0",
+  "program_name": "Slack HackerOne Bug Bounty Program",
+  "platform": "HackerOne",
+  "program_url_reference": "HackerOne program reference supplied by the user; URL not supplied",
+  "target": "slack.com",
+  "asset": "slack.com",
+  "asset_description": "The slack.com site and application.",
+  "asset_type": "web application",
+  "scope_status": "IN_SCOPE",
+  "bounty_eligible": true,
+  "policy_observed_at": "UNKNOWN",
+  "policy_source_note": "Facts are limited to the current HackerOne program notes supplied by the user. Slack, Slack APIs, and HackerOne were not contacted or cryptographically captured.",
+  "automation_permission": false,
+  "autonomous_attack_generation": false,
+  "mass_scanning": false,
+  "fuzzing": false,
+  "enumeration": false,
+  "manual_human_controlled_testing": true,
+  "test_accounts_required": true,
+  "dedicated_test_team_preferred": true,
+  "cross_team_testing_requires_dedicated_test_teams": true,
+  "real_user_data_permission": false,
+  "real_user_interaction_permission": false,
+  "harmful_state_change_permission": false,
+  "exact_request_rate_limits": "UNKNOWN",
+  "slack_api_scope": "UNKNOWN",
+  "exact_permitted_cross_team_action_classes": "UNKNOWN",
+  "exact_test_account_creation_procedure": "UNKNOWN",
+  "exact_permitted_state_changing_actions": "UNKNOWN",
+  "unknown_fields": [
+    "exact request/rate limits",
+    "Slack API scope unless independently confirmed by policy",
+    "exact permitted cross-team action classes",
+    "exact test-account creation procedure",
+    "exact permitted state-changing actions"
+  ],
+  "known_policy_rules": {
+    "private_information_of_other_people_must_not_be_accessed": true,
+    "sensitive_information_such_as_credentials_must_not_be_accessed": true,
+    "harmful_actions_prohibited": [
+      "spam",
+      "phishing",
+      "brute force",
+      "DDoS",
+      "actions that may negatively affect Salesforce/Slack systems or users"
+    ],
+    "data_exfiltration": "Limit to the minimum necessary to validate a vulnerability.",
+    "public_disclosure": "Requires explicit Slack approval."
+  },
+  "execution_gate": {
+    "fail_closed": true,
+    "mandatory_fields": {
+      "exact_slack_target": "slack.com",
+      "exact_self_controlled_test_account_identity": "UNKNOWN",
+      "dedicated_test_workspace_or_team_identified": "UNKNOWN",
+      "second_test_account_or_team_if_boundary_requires_it": "UNKNOWN",
+      "exact_allowed_action": "UNKNOWN",
+      "exact_forbidden_near_miss_action": "UNKNOWN",
+      "no_real_user_or_real_user_data_effect_confirmed": false,
+      "request_count_explicitly_bounded": false,
+      "stop_conditions_defined": [
+        "stop if the target is not exactly slack.com",
+        "stop if a self-controlled test account or dedicated test team cannot be identified",
+        "stop if a second account/team is needed but not explicitly prepared",
+        "stop before any action class not explicitly approved for this test",
+        "stop if any real user, private information, credential, or shared data could be affected",
+        "stop on spam, phishing, brute force, DDoS, or harmful system/user impact",
+        "stop if request bounds or policy status are uncertain"
+      ],
+      "human_approval_for_exact_test": false,
+      "current_hackerone_policy_rechecked_immediately_before_execution": false
+    },
+    "authorized_scope_verified": false,
+    "live_execution_allowed": false,
+    "override_authority": "No generator, model, verifier, renderer, or scope fact may authorize or override this gate."
+  },
+  "human_approval_model": {
+    "states": [
+      "DRAFT",
+      "POLICY_REVIEW_REQUIRED",
+      "READY_FOR_HUMAN_SCOPE_APPROVAL",
+      "AUTHORIZED_SCOPE_VERIFIED",
+      "LIVE_EXECUTION_ALLOWED"
+    ],
+    "current_state": "POLICY_REVIEW_REQUIRED",
+    "transition_rule": "Only explicit human approval for the exact test after every mandatory execution-gate field is resolved may transition toward AUTHORIZED_SCOPE_VERIFIED."
+  },
+  "policy_fingerprint": {
+    "label": "LOCAL_SCOPE_CONTRACT_FINGERPRINT",
+    "algorithm": "SHA-256",
+    "covers": "Normalized local contract content excluding this fingerprint value",
+    "value": "df56b8442b016e930caccbc4eba1e67637b5c9d3b5f6ee8e3ad80fc7c2179f4b"
+  },
+  "source_policy_not_cryptographically_captured": true
+}

@@ -1,0 +1,267 @@
+{
+  "spec_version": "1.0",
+  "assessment_id": "SLACK-LIVE-TEST-01",
+  "phase": "SEALED_DRY_RUN",
+  "target": "slack.com",
+  "workspace": {
+    "reference": "bimbo",
+    "description": "Dedicated self-controlled test workspace",
+    "real_users_permitted": false
+  },
+  "declared_test_identities": {
+    "A": {
+      "label": "TEST_IDENTITY_A",
+      "role": "Primary Workspace Owner",
+      "status": "Active",
+      "purpose": "authorized privileged identity",
+      "controlled_by_researcher": true
+    },
+    "B": {
+      "label": "TEST_IDENTITY_B",
+      "role": "Regular Member",
+      "status": "Active",
+      "purpose": "lower-privileged identity",
+      "controlled_by_researcher": true
+    }
+  },
+  "retired_boundary": {
+    "name": "workspace display-name pair",
+    "status": "RETIRED_OBSOLETE",
+    "old_pair_fingerprint": "cd4cbcedb9a6ceea531f57bf0a86564b9230579397f0f0717ebd53243a10eed7",
+    "must_not_be_used": true
+  },
+  "candidate_boundary": {
+    "selection": "Human-observed Workspace Analytics access boundary after the restrictive visibility setting is established.",
+    "resource": "Workspace Analytics page for bimbo",
+    "action": "view_workspace_analytics",
+    "configuration_setup_not_a_vulnerability_test": true,
+    "permission_semantics_confirmed_from_human_observed_ui": true,
+    "PERMISSION_SEMANTICS_REQUIRES_HUMAN_CONFIRMATION": false,
+    "s0_baseline": {
+      "analytics_visibility": "Everyone, except guests (default)",
+      "setting_changed": false,
+      "human_save_clicked": false
+    },
+    "s1_intended_fixture_state": {
+      "analytics_visibility": "Workspace Owner and Admins only",
+      "setup_actor": "TEST_IDENTITY_A",
+      "setup_action": "set Workspace Analytics visibility to Workspace Owner and Admins only",
+      "setup_execution_allowed_now": false,
+      "separate_human_approval_required": true
+    },
+    "s1_observed_fixture_state": {
+      "state": "HUMAN_OBSERVED_FIXTURE_STATE",
+      "workspace": "bimbo",
+      "resource": "Workspace Analytics",
+      "previous_s0": "Everyone, except guests (default)",
+      "observed_s1": "Workspace Owner and Admins only",
+      "slack_ui_confirmation": "Saved",
+      "performed_manually_by": "TEST_IDENTITY_A",
+      "independent_verification": false,
+      "vulnerability_claim": false,
+      "owner_analytics_access_observation_performed": true,
+      "owner_access_result": "PERMITTED",
+      "owner_observation": {
+        "actor": "TEST_IDENTITY_A",
+        "resource": "Workspace Analytics -> Overview",
+        "result": "ALLOWED ACCESS PERMITTED",
+        "analytics_navigation_present": true,
+        "overview_page_rendered": true,
+        "workspace_analytics_content_accessible": true,
+        "performed_exactly_once_manually": true,
+        "human_observed": true,
+        "independent_network_verification": false
+      },
+      "member_analytics_access_observation_performed": true,
+      "member_access_result": "DENIED",
+      "protected_resource_accessible_to_member": false,
+      "member_observation": {
+        "actor": "TEST_IDENTITY_B",
+        "resource": "Workspace Analytics -> Overview",
+        "result": "FORBIDDEN ACCESS DENIED",
+        "ui_message_primary": "Only bimbo workspace admins can view this page",
+        "ui_message_secondary": "Sorry, but you can't view this page.",
+        "protected_analytics_content_accessible": false,
+        "performed_exactly_once_manually": true,
+        "human_observed": true,
+        "independent_network_verification": false
+      }
+    },
+    "s2_paired_access_observations": {
+      "owner_expected": "access permitted",
+      "member_expected": "access denied"
+    },
+    "observable_effect": "Independently observe whether protected Workspace Analytics content is accessible and record the post-attempt resource state.",
+    "reversal_procedure": "Owner manually restores Everyone, except guests (default) only under separate human approval; no reversal is authorized by this dry-run spec.",
+    "harm_assessment": "Dedicated workspace only; no private messages, other-user private data, external users, Slack Connect, export, destructive action, or availability impact.",
+    "third_party_interaction": false,
+    "reversible": true
+  },
+  "paired_test": {
+    "allowed_twin": {
+      "actor": "TEST_IDENTITY_A",
+      "workspace": "bimbo",
+      "resource": "Workspace Analytics page",
+      "action": "view_workspace_analytics",
+      "arguments": {},
+      "expected_authorization": "ALLOW",
+      "expected_state_before": "S1: Workspace Analytics visibility is Workspace Owner and Admins only",
+      "expected_state_after": "S1 remains unchanged; Owner can view Analytics",
+      "observable_effect": "Owner access is independently observed"
+    },
+    "forbidden_twin": {
+      "actor": "TEST_IDENTITY_B",
+      "workspace": "bimbo",
+      "resource": "same Workspace Analytics page",
+      "action": "view_workspace_analytics",
+      "arguments": {},
+      "expected_authorization": "DENY",
+      "expected_state_before": "same sealed S1 restrictive setting",
+      "expected_state_after": "S1 remains unchanged; no protected Analytics content is accessible",
+      "observable_effect": "Member denial and absence of protected Analytics content are independently observed"
+    },
+    "invariants": [
+      "same slack.com target",
+      "same bimbo workspace",
+      "same Workspace Analytics resource",
+      "same view action and canonical arguments",
+      "S1 restrictive setting established before either access observation",
+      "one manually initiated observation per identity",
+      "only actor identity/authorization differs"
+    ]
+  },
+  "pre_execution_evidence": {
+    "assessment_id": "SLACK-LIVE-TEST-01",
+    "policy_contract_fingerprint": "df56b8442b016e930caccbc4eba1e67637b5c9d3b5f6ee8e3ad80fc7c2179f4b",
+    "workspace_reference": "bimbo; do not store unnecessary workspace IDs or secrets",
+    "both_role_identities": "capture TEST_IDENTITY_A and TEST_IDENTITY_B roles without secrets",
+    "s0": "capture Analytics visibility as Everyone, except guests (default); no setting change",
+    "intended_s1": "capture intended Owner/Admin-only configuration; setup not yet executed",
+    "exact_analytics_resource": "Workspace Analytics page for bimbo",
+    "allowed_request_action": "TEST_IDENTITY_A views Workspace Analytics",
+    "forbidden_request_action": "TEST_IDENTITY_B attempts to view the same Workspace Analytics resource",
+    "expected_results": "Owner permitted; Member denied with no protected Analytics content accessible",
+    "pair_fingerprint": "computed from the sealed paired_test object",
+    "individual_request_fingerprints": "computed from each exact actor, action, and canonical arguments",
+    "timestamp": "capture locally at each approved future stage",
+    "human_approval_state": "capture separate explicit approval for S1, Owner S2, and Member S2",
+    "fixture_state_source": "HUMAN_OBSERVED_FIXTURE_STATE; no independent verification claimed",
+    "owner_observation_source": "HUMAN_OBSERVED; no independent network verification claimed",
+    "owner_observation_performed": true,
+    "member_observation_performed": true,
+    "member_observation_source": "HUMAN_OBSERVED; no independent network verification claimed",
+    "forbidden_material": [
+      "passwords",
+      "cookies",
+      "session tokens",
+      "OTP values",
+      "authentication secrets",
+      "real-user data"
+    ]
+  },
+  "execution_gate": {
+    "fail_closed": true,
+    "exact_target": "slack.com",
+    "exact_workspace": "bimbo",
+    "exact_identity_context_required": true,
+    "declared_identity_labels_only": [
+      "TEST_IDENTITY_A",
+      "TEST_IDENTITY_B"
+    ],
+    "single_attempt_only": true,
+    "maximum_observations": 1,
+    "current_next_step": "Assessment complete; no further twin observation permitted",
+    "live_execution_allowed_for_member_forbidden_twin": false,
+    "separate_approval_stages": [
+      "S1 fixture setup: Owner changes S0 to S1",
+      "S2 Owner allowed access observation",
+      "S2 Member forbidden access observation"
+    ],
+    "autonomous_execution_allowed": false,
+    "human_approval_required": true,
+    "current_policy_recheck_required": true,
+    "permission_semantics_confirmation_required": false,
+    "state_observation_required": true,
+    "no_real_user_effect_required": true,
+    "no_third_party_effect_required": true,
+    "stop_conditions": [
+      "target differs from slack.com or workspace differs from bimbo",
+      "actor identity or role cannot be verified",
+      "any real user appears in the affected resource",
+      "operation would affect a third party",
+      "operation would expose private or sensitive data",
+      "operation becomes destructive",
+      "redirect leaves the intended Slack target",
+      "unexpected permission or state semantics appear",
+      "more than the single sealed attempt would be required",
+      "evidence cannot be attributed to this run",
+      "policy scope cannot be confirmed immediately before execution",
+      "no retry after an unexpected result without new human approval"
+    ],
+    "authorized_scope_verified": false,
+    "live_execution_allowed": false,
+    "override_authority": "No generator, model, verifier, renderer, scope fact, HTTP status, or model prose may authorize or override this gate."
+  },
+  "verdict_model": {
+    "ALLOWED_BOUNDARY_HELD": "Owner can view Analytics after S1 is established.",
+    "BOUNDARY_HELD": "Member is denied Analytics and no protected Analytics content is accessible after S1.",
+    "BOUNDARY_VIOLATION_CONFIRMED": "Member obtains protected Analytics access despite S1 and that access is independently observable.",
+    "INCONCLUSIVE": "The result is ambiguous, or execution/state/evidence cannot be established.",
+    "constraints": [
+      "HTTP status alone cannot establish a violation",
+      "model prose cannot establish impact",
+      "only independently observed protected Analytics access can produce BOUNDARY_VIOLATION_CONFIRMED",
+      "no component may upgrade INCONCLUSIVE to CONFIRMED"
+    ]
+  },
+  "current_verdict": "BOUNDARY_HELD",
+  "next_step": {
+    "name": "NONE - paired observations complete",
+    "actor": null,
+    "requires_separate_human_approval": false,
+    "one_manual_observation_only": false,
+    "execution_allowed_now": false
+  },
+  "proof_capsule": {
+    "state": "COMPLETED_HUMAN_OBSERVED_EVIDENCE",
+    "execution_claim": "Human observations recorded; no independent network/API verification claimed.",
+    "scope_contract_fingerprint": "df56b8442b016e930caccbc4eba1e67637b5c9d3b5f6ee8e3ad80fc7c2179f4b",
+    "pair_fingerprint": "2a68559340d66f65bd2d3a52d74c06dfa4d8a62f767790d2b88ba2aa7852e083",
+    "s0": "Everyone, except guests (default)",
+    "s1": "Workspace Owner and Admins only; human-observed Saved state",
+    "allowed_twin": {
+      "actor": "TEST_IDENTITY_A",
+      "role": "Primary Workspace Owner",
+      "resource": "Workspace Analytics -> Overview",
+      "result": "PERMITTED",
+      "evidence": "Analytics navigation present; Overview rendered; analytics content accessible"
+    },
+    "forbidden_twin": {
+      "actor": "TEST_IDENTITY_B",
+      "role": "Regular Member",
+      "resource": "Workspace Analytics -> Overview",
+      "result": "DENIED",
+      "evidence": "Human-observed denial messages; protected analytics content not accessible"
+    },
+    "final_verdict": "BOUNDARY_HELD",
+    "human_observed_evidence": true,
+    "locally_verified_integrity": true,
+    "local_provenance": {
+      "source": "operator-supplied human observations",
+      "pair_and_contract_fingerprints_checked_locally": true,
+      "recorded_at_local": "2026-08-30T12:57:34+02:00"
+    },
+    "independent_network_verification": false,
+    "timestamps": {
+      "fixture_and_observation_timestamps": "NOT_SUPPLIED_BY_OPERATOR",
+      "recorded_at_local": "2026-08-30T12:57:34+02:00"
+    },
+    "forbidden_material_stored": false,
+    "capsule_fingerprint": "54903de37c679a43b11e9ceae940518ed1b0625968a0057caf0cebc9cf00f44f"
+  },
+  "pair_fingerprint": "2a68559340d66f65bd2d3a52d74c06dfa4d8a62f767790d2b88ba2aa7852e083",
+  "individual_request_fingerprints": {
+    "allowed_twin": "989d517979bd82c9122ead81cbb68f2db079ab89b15e3286232373d3dab5b4ba",
+    "forbidden_twin": "989d517979bd82c9122ead81cbb68f2db079ab89b15e3286232373d3dab5b4ba"
+  }
+}

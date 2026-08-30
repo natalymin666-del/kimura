@@ -1,0 +1,18 @@
+{
+  "index_version": "1.0",
+  "index_type": "minimal_external_boundary_benchmark",
+  "case_count": 1,
+  "cases": [
+    {
+      "case_id": "EXTERNAL_BOUNDARY_CASE_001",
+      "target": "slack.com",
+      "boundary": "Workspace Analytics — Owner vs Regular Member",
+      "pair_type": "allowed Owner twin vs forbidden Regular Member twin",
+      "result": "BOUNDARY_HELD",
+      "execution_mode": "HUMAN_OPERATED",
+      "evidence_level": "HUMAN_OBSERVED; locally integrity-checked; no independent network verification"
+    }
+  ],
+  "success_rate": "NOT_CALCULATED_FROM_ONE_CASE",
+  "fake_cases_added": false
+}
